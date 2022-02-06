@@ -1,3 +1,5 @@
+Fork of PlexAniSync to work with Emby
+
 # Plex to AniList Sync
 [![Build Status](https://travis-ci.com/RickDB/PlexAniSync.svg?branch=master)](https://travis-ci.com/RickDB/PlexAniSync)![Docker](https://github.com/rickdb/Docker-PlexAniSync/actions/workflows/docker-publish.yml/badge.svg)
 
