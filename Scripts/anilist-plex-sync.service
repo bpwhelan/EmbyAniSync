@@ -1,12 +1,12 @@
 [Unit]
-Description=One-shot execution of Plex to Anilist tracking sync
+Description=One-shot execution of Emby to Anilist tracking sync
 
 [Service]
 Type=oneshot
 User=YOUR_USER
 Group=YOUR_USER
-WorkingDirectory=YOUR_PLEXANYSYNC_FOLDER_PATH
-ExecStart=/usr/bin/python3 /YOUR_PLEXANYSYNC_FOLDER_PATH/PlexAniSync.py
+WorkingDirectory=YOUR_EMBYANYSYNC_FOLDER_PATH
+ExecStart=/usr/bin/python3 /YOUR_EMBYANYSYNC_FOLDER_PATH/EmbyAniSync.py
 RemainAfterExit=no
 
 [Install]

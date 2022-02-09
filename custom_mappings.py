@@ -1,15 +1,15 @@
 # coding=utf-8
-import os
 import logging
+import os
 import sys
 from typing import List
-from dataclasses import dataclass
 
 import yamale
 from yamale.yamale_error import YamaleError
 
+from embyclasses import dataclass
 
-logger = logging.getLogger("PlexAniSync")
+logger = logging.getLogger("EmbyAniSync")
 MAPPING_FILE = "custom_mappings.yaml"
 
 

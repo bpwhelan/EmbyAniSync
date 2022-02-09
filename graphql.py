@@ -7,8 +7,7 @@ from typing import Any, Dict
 
 import requests
 
-
-logger = logging.getLogger("PlexAniSync")
+logger = logging.getLogger("EmbyAniSync")
 
 
 ANILIST_ACCESS_TOKEN = ""
@@ -132,6 +131,7 @@ def fetch_user_list(username: str):
     variables = {"username": username}
 
     response = send_graphql_request(query, variables)
+    print(response.content)
     return json.loads(response.content, object_hook=to_object)
 
 

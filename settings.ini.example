@@ -1,20 +1,20 @@
-[PLEX]
+[EMBY]
 anime_section = Anime
 
- # Choose 'direct' or 'myplex'
+ # Choose 'direct' or 'myemby'
 authentication_method = direct
 
 # Direct IP
 base_url = http://127.0.0.1:32400
 token = abcdef123456789
 
-# MyPlex
+# MyEmby
 server = Sadala
-myplex_user = John
-myplex_password = Doe
+myemby_user = John
+myemby_password = Doe
 
-# if you enable home_user_sync it will only sync against that specific Plex home user, it requires the full url of your Plex server just like with the Direct IP method
-# home_username is the actual Plex home username and not their e-mail address, this is also case sensitive
+# if you enable home_user_sync it will only sync against that specific Emby home user, it requires the full url of your Emby server just like with the Direct IP method
+# home_username is the actual Emby home username and not their e-mail address, this is also case sensitive
 
 home_user_sync = False
 home_username = Megumin
@@ -22,7 +22,7 @@ home_server_base_url = http://127.0.0.1:32400
 
 [ANILIST]
 access_token = SomeVeryLongAccessToken
-plex_episode_count_priority = False
+emby_episode_count_priority = False
 skip_list_update = False
 username = SomeUsername
 log_failed_matches = False
