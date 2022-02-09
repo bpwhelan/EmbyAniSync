@@ -1,258 +1,411 @@
-Fork of EmbyAniSync to work with Emby (WIP)
+# Emby to AniList Sync (WIP)
 
-# Emby to AniList Sync
-[![Build Status](https://travis-ci.com/RickDB/EmbyAniSync.svg?branch=master)](https://travis-ci.com/RickDB/EmbyAniSync)![Docker](https://github.com/rickdb/Docker-EmbyAniSync/actions/workflows/docker-publish.yml/badge.svg)
+I'm really bad at python so do not trust this to be 100%, also might need some work setting it up correctly
 
+Currently just meant for private use. Maybe pending approval for public use.
 
-![Logo](logo.png)
 
-If you manage your Anime with Emby this will allow you to sync your libraries to [AniList](https://anilist.co)  , recommend using Emby with the [HAMA agent](https://github.com/ZeroQI/Hama.bundle) for best Anime name matches.
+[//]: # ([![Build Status]&#40;https://travis-ci.com/RickDB/EmbyAniSync.svg?branch=master&#41;]&#40;https://travis-ci.com/RickDB/EmbyAniSync&#41;![Docker]&#40;https://github.com/rickdb/Docker-EmbyAniSync/actions/workflows/docker-publish.yml/badge.svg&#41;)
 
-Unwatched Anime in Emby will not be synced so only those that have at least one watched episode, updates to AniList are only send with changes so need to worry about messing up watch history.
+[//]: # ()
+[//]: # ()
+[//]: # (![Logo]&#40;logo.png&#41;)
 
+[//]: # ()
+[//]: # (If you manage your Anime with Emby this will allow you to sync your libraries to [AniList]&#40;https://anilist.co&#41;  , recommend using Emby with the [HAMA agent]&#40;https://github.com/ZeroQI/Hama.bundle&#41; for best Anime name matches.)
 
-This version is based on my previous project  [EmbyMalSync](https://github.com/RickDB/EmbyMALSync) which due to MAL closing their API is no longer working, this might change in the future and if it does will resume working on that again as as well.
+[//]: # ()
+[//]: # (Unwatched Anime in Emby will not be synced so only those that have at least one watched episode, updates to AniList are only send with changes so need to worry about messing up watch history.)
 
+[//]: # ()
+[//]: # ()
+[//]: # (This version is based on my previous project  [EmbyMalSync]&#40;https://github.com/RickDB/EmbyMALSync&#41; which due to MAL closing their API is no longer working, this might change in the future and if it does will resume working on that again as as well.)
 
-**If you want test it out first without updating your actual AniList entries check out ``Skip list updating for testing `` from the ``Optional features`` section of this readme**
+[//]: # ()
+[//]: # ()
+[//]: # (**If you want test it out first without updating your actual AniList entries check out ``Skip list updating for testing `` from the ``Optional features`` section of this readme**)
 
-## Setup
+[//]: # ()
+[//]: # (## Setup)
 
-### Step 1 - install Python
+[//]: # ()
+[//]: # (### Step 1 - install Python)
 
-Make sure you have Python 3.7 or higher installed:
+[//]: # ()
+[//]: # (Make sure you have Python 3.7 or higher installed:)
 
-[Python homepage](https://www.python.org/)
+[//]: # ()
+[//]: # ([Python homepage]&#40;https://www.python.org/&#41;)
 
+[//]: # ()
+[//]: # ()
+[//]: # (### Step 2 - Download project files)
 
-### Step 2 - Download project files
+[//]: # ()
+[//]: # (Get the latest version using your favorite git client or by downloading the latest release from here:)
 
-Get the latest version using your favorite git client or by downloading the latest release from here:
+[//]: # ()
+[//]: # (https://github.com/RickDB/EmbyAniSync/archive/master.zip)
 
-https://github.com/RickDB/EmbyAniSync/archive/master.zip
+[//]: # ()
+[//]: # ()
+[//]: # (### Step 3 - Configuration)
 
+[//]: # ()
+[//]: # (From the project directory rename `settings.ini.example` to `settings.ini`, open `settings.ini` with your favorite text editor and edit where needed.)
 
-### Step 3 - Configuration
+[//]: # ()
+[//]: # ()
+[//]: # (#### Emby)
 
-From the project directory rename `settings.ini.example` to `settings.ini`, open `settings.ini` with your favorite text editor and edit where needed.
+[//]: # ()
+[//]: # (Only choose one of the authentication methods, MyEmby is the easiest.)
 
+[//]: # ()
+[//]: # (##### MyEmby authentication &#40;prefered&#41;)
 
-#### Emby
+[//]: # ()
+[//]: # (For MyEmby authentication you will need your Emby server name and Emby account login information, for example:)
 
-Only choose one of the authentication methods, MyEmby is the easiest.
+[//]: # ()
+[//]: # (```)
 
-##### MyEmby authentication (prefered)
+[//]: # ([EMBY])
 
-For MyEmby authentication you will need your Emby server name and Emby account login information, for example:
+[//]: # (anime_section = Anime)
 
-```
-[EMBY]
-anime_section = Anime
-authentication_method = myemby
+[//]: # (authentication_method = myemby)
 
-server = Sadala
-myemby_user = Goku
-myemby_password = kamehameha
-```
+[//]: # ()
+[//]: # (server = Sadala)
 
-This completes the MyEmby authentication and **only** if you want to sync against a specific Emby Home user which isn't the admin user follow the below instructions:
+[//]: # (myemby_user = Goku)
 
-For this to work lookup the home username on your Emby server and also fill in your full Emby server URL, for example:
+[//]: # (myemby_password = kamehameha)
 
-```
-[EMBY]
-anime_section = Anime
-authentication_method = myemby
+[//]: # (```)
 
-# MyEmby
-server = Sadala
-myemby_user = John # has to be the Emby admin user acount
-myemby_password = Doe
+[//]: # ()
+[//]: # (This completes the MyEmby authentication and **only** if you want to sync against a specific Emby Home user which isn't the admin user follow the below instructions:)
 
-# if you enable home_user_sync it will only sync against that specific Emby home user, it requires the full url of your Emby server just like with the Direct IP method
-# home_username is the actual Emby home username and not their e-mail address, this is also case sensitive
+[//]: # ()
+[//]: # (For this to work lookup the home username on your Emby server and also fill in your full Emby server URL, for example:)
 
-home_user_sync = True
-home_username = Megumin # the home user account you want to sync with and can not be the admin user
-home_server_base_url = http://127.0.0.1:32400
-```
+[//]: # ()
+[//]: # (```)
 
-##### Direct Emby authentication (advanced users)
+[//]: # ([EMBY])
 
-The direct authentication method is for users that don't want to use Emby its online authentication system however is more complex to setup, for this you need to find your token manually:
+[//]: # (anime_section = Anime)
 
-https://support.emby.tv/articles/204059436-finding-an-authentication-token-x-emby-token/
+[//]: # (authentication_method = myemby)
 
-Afterwards can enter your full Emby site url and above authentication token, for example:
+[//]: # ()
+[//]: # (# MyEmby)
 
-```
-[EMBY]
-anime_section = Anime
-authentication_method = direct
+[//]: # (server = Sadala)
 
-base_url = http://192.168.1.234:32400
-token = abcdef123456789
-```
+[//]: # (myemby_user = John # has to be the Emby admin user acount)
 
-##### Section configuration
+[//]: # (myemby_password = Doe)
 
-In the settings file enter your Emby library / section name containing your Anime, for example:
+[//]: # ()
+[//]: # (# if you enable home_user_sync it will only sync against that specific Emby home user, it requires the full url of your Emby server just like with the Direct IP method)
 
-```
-[EMBY]
-anime_section = Anime
-```
+[//]: # (# home_username is the actual Emby home username and not their e-mail address, this is also case sensitive)
 
-Multiple libraries are now supported and you separate them by using the pipeline ("|") character like so:
+[//]: # ()
+[//]: # (home_user_sync = True)
 
-```
-[EMBY]
-anime_section = Anime|Anime2
-```
+[//]: # (home_username = Megumin # the home user account you want to sync with and can not be the admin user)
 
-#### AniList
+[//]: # (home_server_base_url = http://127.0.0.1:32400)
 
-For AniList you need get a so called `access_token` which you can retrieve via this link and if not logged in will ask you to do so:
+[//]: # (```)
 
-https://anilist.co/api/v2/oauth/authorize?client_id=1549&response_type=token
+[//]: # ()
+[//]: # (##### Direct Emby authentication &#40;advanced users&#41;)
 
-Make sure to copy the entire key as it is pretty long and paste that in the settings file under 'access_token', no need to enclose it just paste it as-is.
+[//]: # ()
+[//]: # (The direct authentication method is for users that don't want to use Emby its online authentication system however is more complex to setup, for this you need to find your token manually:)
 
-Afterwards make sure to also fill in your AniList username as well which is your actual username not your e-mail address like for example:
+[//]: # ()
+[//]: # (https://support.emby.tv/articles/204059436-finding-an-authentication-token-x-emby-token/)
 
-```
-[ANILIST]
-username = GoblinSlayer
-access_token = iLikeToastyGoblins.
-```
+[//]: # ()
+[//]: # (Afterwards can enter your full Emby site url and above authentication token, for example:)
 
-### Step 4 - Install requirements
+[//]: # ()
+[//]: # (```)
 
-Install the addtional requirements using the Python package installer (pip) from within the project folder:
+[//]: # ([EMBY])
 
-`pip install -r requirements.txt`
+[//]: # (anime_section = Anime)
 
+[//]: # (authentication_method = direct)
 
-### Step 5 - Start syncing
+[//]: # ()
+[//]: # (base_url = http://192.168.1.234:32400)
 
-Now that configuration is finished and requirements have been installed we can finally start the sync script:
+[//]: # (token = abcdef123456789)
 
-`python EmbyAniSync.py`
+[//]: # (```)
 
-Depending on library size and server can take a few minutes to finish, for scheduled syncing you can create a cronjob, systemd timer or windows task which runs it every 30 minutes for instance.
+[//]: # ()
+[//]: # (##### Section configuration)
 
-See [Systemd service](https://github.com/RickDB/EmbyAniSync/wiki/Systemd-service) for a tutorial on how to set up a timer with systemd.
+[//]: # ()
+[//]: # (In the settings file enter your Emby library / section name containing your Anime, for example:)
 
-## Optional features
+[//]: # ()
+[//]: # (```)
 
-### Custom anime mapping
+[//]: # ([EMBY])
 
-You can manually link a Emby title and season to an AniList ID, to do so:
+[//]: # (anime_section = Anime)
 
-- From the project folder copy `custom_mappings.yaml.example` to `custom_mappings.yaml`
-- Add new entries there in the following format:
+[//]: # (```)
 
-```yaml
-  - title: "Emby title for series"
-    seasons:
-      - season: Emby season
-        anilist-id: AniList series ID
-      - season: Emby season
-        anilist-id: AniList series ID
-```
+[//]: # ()
+[//]: # (Multiple libraries are now supported and you separate them by using the pipeline &#40;"|"&#41; character like so:)
 
-If the Emby season should be split into 2 seasons, add an optional `start` parameter to each season like this:
+[//]: # ()
+[//]: # (```)
 
-```yaml
-  - title: "Re:ZERO -Starting Life in Another World-"
-    seasons:
-      - season: 2
-        anilist-id: 108632
-        start: 1
-      - season: 2
-        anilist-id: 119661
-        start: 14
-```
+[//]: # ([EMBY])
 
-Episodes 1-13 will be mapped to Re:Zero 2nd Season Part 1, episodes 14 and higher will be mapped to Re:Zero 2nd Season Part 2.
+[//]: # (anime_section = Anime|Anime2)
 
-- To find out the AniList ID you can visit the series page and copy it from the site url, like for example My Shield hero has ID 99263:
+[//]: # (```)
 
-https://anilist.co/anime/99263/Tate-no-Yuusha-no-Nariagari
+[//]: # ()
+[//]: # (#### AniList)
 
-- You can remove any existing entries from the example file as they are purely instructional
-- Upon startup it will check if the file is a valid YAML file. The most likely reason it's not is because you didn't put quotes around an anime title with special characters (e.g. ":") in it.
+[//]: # ()
+[//]: # (For AniList you need get a so called `access_token` which you can retrieve via this link and if not logged in will ask you to do so:)
 
-#### Community mappings
+[//]: # ()
+[//]: # (https://anilist.co/api/v2/oauth/authorize?client_id=1549&response_type=token)
 
-There are some mappings provided by the Github community at https://github.com/RickDB/EmbyAniSync-Custom-Mappings/. For now you can use the mapping files by copying parts into your own mapping file.
+[//]: # ()
+[//]: # (Make sure to copy the entire key as it is pretty long and paste that in the settings file under 'access_token', no need to enclose it just paste it as-is.)
 
-The feature of synonyms was introduced for the community mappings where you can specify that a show can have one of multiple titles but should be mapped the same way. See Shaman King (2021) in the example mapping file.
+[//]: # ()
+[//]: # (Afterwards make sure to also fill in your AniList username as well which is your actual username not your e-mail address like for example:)
 
-### Custom settings file location
+[//]: # ()
+[//]: # (```)
 
-If you want to load a different settings.in file you can do so by supplying it in the first argument like so:
+[//]: # ([ANILIST])
 
-`python EmbyAniSync.py settings_alternate.ini`
+[//]: # (username = GoblinSlayer)
 
-In case of the Tautulli sync helper script you can do as well, first argument will then be settings filename and second will be the series name like so:
+[//]: # (access_token = iLikeToastyGoblins.)
 
-`python TautulliSyncHelper.py  settings_alternate.ini <emby show name>`
+[//]: # (```)
 
-### Make Emby watched episode count take priority
+[//]: # ()
+[//]: # (### Step 4 - Install requirements)
 
-By default if AniList episode count watched is higher than that of Emby it will skip over, this can be overriden with the setting `emby_episode_count_priority`
+[//]: # ()
+[//]: # (Install the addtional requirements using the Python package installer &#40;pip&#41; from within the project folder:)
 
-When set to True it will update the AniList entry if Emby watched episode count is higher than 0 and will not take into account the AniList watched episode count even if that is higher.
+[//]: # ()
+[//]: # (`pip install -r requirements.txt`)
 
-**Use this with caution as normally this isn't required and only meant for certain use cases.**
+[//]: # ()
+[//]: # ()
+[//]: # (### Step 5 - Start syncing)
 
-### Skip list updating for testing
+[//]: # ()
+[//]: # (Now that configuration is finished and requirements have been installed we can finally start the sync script:)
 
-In your settings file there's a setting called `skip_list_update` which you can set to True or False, if set to True it will **NOT** update your AniList which is useful if you want to do a test run to check if everything lines up properly.
+[//]: # ()
+[//]: # (`python EmbyAniSync.py`)
 
-### Tautulli Sync Helper script
+[//]: # ()
+[//]: # (Depending on library size and server can take a few minutes to finish, for scheduled syncing you can create a cronjob, systemd timer or windows task which runs it every 30 minutes for instance.)
 
-In the project folder you will find `TautulliSyncHelper.py` which you can use to sync a single Emby show to AniList for use in Tautulli script notifcations (trigger on playback stop).
+[//]: # ()
+[//]: # (See [Systemd service]&#40;https://github.com/RickDB/EmbyAniSync/wiki/Systemd-service&#41; for a tutorial on how to set up a timer with systemd.)
 
-Usage is as follows:
+[//]: # ()
+[//]: # (## Optional features)
 
-`python TautulliSyncHelper.py <emby show name>`
+[//]: # ()
+[//]: # (### Custom anime mapping)
 
-Depending on your OS make sure to place the show name between single or double quotes, for more information see the wiki page:
+[//]: # ()
+[//]: # (You can manually link a Emby title and season to an AniList ID, to do so:)
 
-https://github.com/RickDB/EmbyAniSync/wiki/Tautulli-sync-script
+[//]: # ()
+[//]: # (- From the project folder copy `custom_mappings.yaml.example` to `custom_mappings.yaml`)
 
-## Docker
+[//]: # (- Add new entries there in the following format:)
 
-Docker version is located here: [EmbyAniSync](https://github.com/RickDB/EmbyAniSync/pkgs/container/embyanisync)
+[//]: # ()
+[//]: # (```yaml)
 
-Another docker container for Tautulli with built-in EmbyAniSync can be found here: [Tautulli-EmbyAniSync](https://github.com/RickDB/EmbyAniSync/pkgs/container/tautulli-embyanisync)
+[//]: # (  - title: "Emby title for series")
 
+[//]: # (    seasons:)
 
-## Requirements
+[//]: # (      - season: Emby season)
 
-[Python 3.7 or higher](https://www.python.org/)
+[//]: # (        anilist-id: AniList series ID)
 
-## Support
+[//]: # (      - season: Emby season)
 
-Support thread is located on AniList:
+[//]: # (        anilist-id: AniList series ID)
 
-https://anilist.co/forum/thread/6443
+[//]: # (```)
 
-Optionally also on Emby forums but less active there:
+[//]: # ()
+[//]: # (If the Emby season should be split into 2 seasons, add an optional `start` parameter to each season like this:)
 
-https://forums.emby.tv/t/embyanisync-sync-your-emby-library-to-anilist/365826
+[//]: # ()
+[//]: # (```yaml)
 
-## Planned
+[//]: # (  - title: "Re:ZERO -Starting Life in Another World-")
 
-Currently planned for future releases:
+[//]: # (    seasons:)
 
-- [ ] XREF title matching based on HAMA which uses custom lists and AniDB
-- [ ] Add setting to skip updating shows with dropped state on user list
-- [ ] Ignore anime list support (based on content rating and / or title)
-- [ ] Improve error handling
+[//]: # (      - season: 2)
 
-## Credits
+[//]: # (        anilist-id: 108632)
 
-[Python-EmbyAPI](https://github.com/pkkid/python-embyapi)
+[//]: # (        start: 1)
+
+[//]: # (      - season: 2)
+
+[//]: # (        anilist-id: 119661)
+
+[//]: # (        start: 14)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (Episodes 1-13 will be mapped to Re:Zero 2nd Season Part 1, episodes 14 and higher will be mapped to Re:Zero 2nd Season Part 2.)
+
+[//]: # ()
+[//]: # (- To find out the AniList ID you can visit the series page and copy it from the site url, like for example My Shield hero has ID 99263:)
+
+[//]: # ()
+[//]: # (https://anilist.co/anime/99263/Tate-no-Yuusha-no-Nariagari)
+
+[//]: # ()
+[//]: # (- You can remove any existing entries from the example file as they are purely instructional)
+
+[//]: # (- Upon startup it will check if the file is a valid YAML file. The most likely reason it's not is because you didn't put quotes around an anime title with special characters &#40;e.g. ":"&#41; in it.)
+
+[//]: # ()
+[//]: # (#### Community mappings)
+
+[//]: # ()
+[//]: # (There are some mappings provided by the Github community at https://github.com/RickDB/EmbyAniSync-Custom-Mappings/. For now you can use the mapping files by copying parts into your own mapping file.)
+
+[//]: # ()
+[//]: # (The feature of synonyms was introduced for the community mappings where you can specify that a show can have one of multiple titles but should be mapped the same way. See Shaman King &#40;2021&#41; in the example mapping file.)
+
+[//]: # ()
+[//]: # (### Custom settings file location)
+
+[//]: # ()
+[//]: # (If you want to load a different settings.in file you can do so by supplying it in the first argument like so:)
+
+[//]: # ()
+[//]: # (`python EmbyAniSync.py settings_alternate.ini`)
+
+[//]: # ()
+[//]: # (In case of the Tautulli sync helper script you can do as well, first argument will then be settings filename and second will be the series name like so:)
+
+[//]: # ()
+[//]: # (`python TautulliSyncHelper.py  settings_alternate.ini <emby show name>`)
+
+[//]: # ()
+[//]: # (### Make Emby watched episode count take priority)
+
+[//]: # ()
+[//]: # (By default if AniList episode count watched is higher than that of Emby it will skip over, this can be overriden with the setting `emby_episode_count_priority`)
+
+[//]: # ()
+[//]: # (When set to True it will update the AniList entry if Emby watched episode count is higher than 0 and will not take into account the AniList watched episode count even if that is higher.)
+
+[//]: # ()
+[//]: # (**Use this with caution as normally this isn't required and only meant for certain use cases.**)
+
+[//]: # ()
+[//]: # (### Skip list updating for testing)
+
+[//]: # ()
+[//]: # (In your settings file there's a setting called `skip_list_update` which you can set to True or False, if set to True it will **NOT** update your AniList which is useful if you want to do a test run to check if everything lines up properly.)
+
+[//]: # ()
+[//]: # (### Tautulli Sync Helper script)
+
+[//]: # ()
+[//]: # (In the project folder you will find `TautulliSyncHelper.py` which you can use to sync a single Emby show to AniList for use in Tautulli script notifcations &#40;trigger on playback stop&#41;.)
+
+[//]: # ()
+[//]: # (Usage is as follows:)
+
+[//]: # ()
+[//]: # (`python TautulliSyncHelper.py <emby show name>`)
+
+[//]: # ()
+[//]: # (Depending on your OS make sure to place the show name between single or double quotes, for more information see the wiki page:)
+
+[//]: # ()
+[//]: # (https://github.com/RickDB/EmbyAniSync/wiki/Tautulli-sync-script)
+
+[//]: # ()
+[//]: # (## Docker)
+
+[//]: # ()
+[//]: # (Docker version is located here: [EmbyAniSync]&#40;https://github.com/RickDB/EmbyAniSync/pkgs/container/embyanisync&#41;)
+
+[//]: # ()
+[//]: # (Another docker container for Tautulli with built-in EmbyAniSync can be found here: [Tautulli-EmbyAniSync]&#40;https://github.com/RickDB/EmbyAniSync/pkgs/container/tautulli-embyanisync&#41;)
+
+[//]: # ()
+[//]: # ()
+[//]: # (## Requirements)
+
+[//]: # ()
+[//]: # ([Python 3.7 or higher]&#40;https://www.python.org/&#41;)
+
+[//]: # ()
+[//]: # (## Support)
+
+[//]: # ()
+[//]: # (Support thread is located on AniList:)
+
+[//]: # ()
+[//]: # (https://anilist.co/forum/thread/6443)
+
+[//]: # ()
+[//]: # (Optionally also on Emby forums but less active there:)
+
+[//]: # ()
+[//]: # (https://forums.emby.tv/t/embyanisync-sync-your-emby-library-to-anilist/365826)
+
+[//]: # ()
+[//]: # (## Planned)
+
+[//]: # ()
+[//]: # (Currently planned for future releases:)
+
+[//]: # ()
+[//]: # (- [ ] XREF title matching based on HAMA which uses custom lists and AniDB)
+
+[//]: # (- [ ] Add setting to skip updating shows with dropped state on user list)
+
+[//]: # (- [ ] Ignore anime list support &#40;based on content rating and / or title&#41;)
+
+[//]: # (- [ ] Improve error handling)
+
+[//]: # ()
+[//]: # (## Credits)
+
+[//]: # ()
+[//]: # ([Python-EmbyAPI]&#40;https://github.com/pkkid/python-embyapi&#41;)
