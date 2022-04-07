@@ -2,7 +2,7 @@
 
 I'm really bad at python so do not trust this to be 100%, also might need some work setting it up correctly
 
-Currently just meant for private use. Maybe pending approval for public use.
+Currently just meant for private use.
 
 
 [//]: # ([![Build Status]&#40;https://travis-ci.com/RickDB/EmbyAniSync.svg?branch=master&#41;]&#40;https://travis-ci.com/RickDB/EmbyAniSync&#41;![Docker]&#40;https://github.com/rickdb/Docker-EmbyAniSync/actions/workflows/docker-publish.yml/badge.svg&#41;)
