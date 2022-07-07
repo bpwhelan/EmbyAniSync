@@ -57,7 +57,7 @@ class HostNameIgnoringAdapter(HTTPAdapter):
 #                     sys.exit(1)
 #
 #                 logger.warning(
-#                     f"Authenticating as admin for MyEmby home user: {home_username}"
+#                     f"Authenticating as admin f1or MyEmby home user: {home_username}"
 #                 )
 #                 # emby_account = MyEmbyAccount(emby_user, emby_password)
 #                 emby_account = emby_settings.userID
@@ -89,11 +89,11 @@ class HostNameIgnoringAdapter(HTTPAdapter):
 #         logger.exception("Unable to authenticate to Emby Media Server")
 #         sys.exit(1)
 
-def get_anime_shows() -> List[EmbyShow]:
+def get_anime_shows(emby_shows: List[EmbyShow], anime_section_id) -> List[EmbyShow]:
     base_url = emby_settings["base_url"]
     token = emby_settings["token"]
     user_id = emby_settings["userID"]
-    anime_section_id = emby_settings["anime_section_id"]
+    # anime_section_id = emby_settings["anime_section_id"]
     response = requests.get(
         base_url + "/emby/Users/" + user_id + "/Items?ParentId=" + anime_section_id + "&Fields=ProviderIds%2CRecursiveItemCount%2CSeasonCount%2CProductionYear&api_key=" + token)
 
@@ -102,7 +102,7 @@ def get_anime_shows() -> List[EmbyShow]:
     data = json.loads(response.content)
 
     # print(data)
-    emby_shows = []
+    # emby_shows = []
     for item in data["Items"]:
         # print(item)
         emby_shows.append(EmbyShow(item))
@@ -124,7 +124,7 @@ def get_anime_shows() -> List[EmbyShow]:
         emby_season = EmbySeason(season)
         all_seasons.append(emby_season)
         matched_show = next((show for show in emby_shows if show.id == emby_season.series_id), None)
-        if matched_show:
+        if matched_show and emby_season.name.lower().startswith('season'):
             emby_season.parent_name = matched_show.name
             matched_show.seasons.append(emby_season)
 
@@ -200,9 +200,9 @@ def get_watched_shows(shows: List[EmbyShow]) -> Optional[List[EmbyWatchedSeries]
                     if show.year:
                         year = int(show.year)
 
-                    if not hasattr(show, "titleSort"):
+                    if not hasattr(show, "sort_name"):
                         show.sort_name = show.name
-                    elif show.titleSort == "":
+                    elif show.sort_name == "":
                         show.sort_name = show.name
 
                     # Disable original title for now, results in false positives for yet unknown reason

@@ -17,8 +17,8 @@ class UserData:
 
     def __init__(self, user_data):
         self.played_percentage = user_data.get("PlayedPercentage")
-        self.unplayed_count = user_data.get("UnplayedItemCount")
-        self.play_count = user_data.get("PlayCount")
+        self.unplayed_count = user_data.get("UnplayedItemCount", 0)
+        self.play_count = user_data.get("PlayCount", 0)
         self.played = user_data.get("Played")
 
 
@@ -84,12 +84,13 @@ class EmbyShow:
     type: str
     user_data: UserData
     anilist_id: str
-    episodes_available: int
-    episodes_played: int
     seasons: List[EmbySeason]
     year: int
+    episodes_available: int = 0
+    episodes_played: int = 0
 
     def __init__(self, item):
+        print(item)
         self.name = item.get("Name")
         self.sort_name = item.get("SortName")
         self.id = item.get("Id")
@@ -97,7 +98,8 @@ class EmbyShow:
         self.type = item.get("Type")
         self.user_data = UserData(item.get("UserData"))
         self.anilist_id = self.provider_ids.anilist
-        self.episodes_available = item.get("RecursiveItemCount")
+        self.episodes_available = item.get("RecursiveItemCount", 0)
+        # if self.episodes_available is not None:
         self.episodes_played = self.episodes_available - self.user_data.unplayed_count
         self.seasons = []
         self.year = item.get("ProductionYear")

@@ -27,21 +27,21 @@ jobs:
     - name: Lint with flake8 and pylint
       run: |
         flake8 .
-        pylint PlexAniSync.py TautulliSyncHelper.py plexmodule.py anilist.py custom_mappings.py || pylint-exit --error-fail --warn-fail $?
-  build-docker-plexanisync:
+        pylint EmbyAniSync.py TautulliSyncHelper.py embymodule.py anilist.py custom_mappings.py || pylint-exit --error-fail --warn-fail $?
+  build-docker-embyanisync:
     needs: lint
-    uses: rickdb/plexanisync/.github/workflows/build-docker-image.yml@master
+    uses: rickdb/embyanisync/.github/workflows/build-docker-image.yml@master
     with:
-      dockerfile: ./Docker/PlexAniSync/Dockerfile
-      imagename: ${{ github.repository_owner }}/plexanisync
+      dockerfile: ./Docker/EmbyAniSync/Dockerfile
+      imagename: ${{ github.repository_owner }}/embyanisync
       push: ${{ github.event_name != 'pull_request' }}
       platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
           
   build-docker-tautulli:
     needs: lint
-    uses: rickdb/plexanisync/.github/workflows/build-docker-image.yml@master
+    uses: rickdb/embyanisync/.github/workflows/build-docker-image.yml@master
     with:
       dockerfile: ./Docker/Tautulli/Dockerfile
-      imagename: ${{ github.repository_owner }}/tautulli-plexanisync
+      imagename: ${{ github.repository_owner }}/tautulli-embyanisync
       push: ${{ github.event_name != 'pull_request' }}
       platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64

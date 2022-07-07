@@ -131,7 +131,7 @@ def fetch_user_list(username: str):
     variables = {"username": username}
 
     response = send_graphql_request(query, variables)
-    print(response.content)
+    # print(response.content)
     return json.loads(response.content, object_hook=to_object)
 
 

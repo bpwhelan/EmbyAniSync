@@ -1,5 +1,6 @@
 # coding=utf-8
 import configparser
+import json
 import logging.handlers
 import os
 import sys
@@ -11,6 +12,11 @@ import embymodule
 import graphql
 from _version import __version__
 from custom_mappings import read_custom_mappings
+from json import JSONEncoder
+
+class ShowEncoder(JSONEncoder):
+    def default(self, o):
+        return o.__dict__
 
 # Logger settings
 LOG_FILENAME = "EmbyAniSync.log"
@@ -109,7 +115,13 @@ def start():
             )
 
         embymodule.emby_settings = emby_settings
-        emby_anime_series = embymodule.get_anime_shows()
+        emby_anime_series = []
+        embymodule.get_anime_shows(emby_anime_series, emby_settings["anime_section_id"])
+        if emby_settings["anime_section_id2"] is not None:
+            embymodule.get_anime_shows(emby_anime_series, emby_settings["anime_section_id2"])
+
+    with open("test.json", 'w') as f:
+        json.dump(emby_anime_series, f, indent=4, cls=ShowEncoder)
 
         # if emby_anime_series is None:
         #     logger.error("Found no Emby shows for processing")

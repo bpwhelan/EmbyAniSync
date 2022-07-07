@@ -1,12 +1,12 @@
 #!/bin/bash
-echo "Updating PlexAniSync"
-wget https://github.com/RickDB/PlexAniSync/archive/master.zip &&\
+echo "Updating EmbyAniSync"
+wget https://github.com/RickDB/EmbyAniSync/archive/master.zip &&\
 unzip master.zip &&\
 rm master.zip &&\
-cp -f /PlexAniSync-master/*.py /plexanisync
-cp -f /PlexAniSync-master/requirements.txt /plexanisync/requirements.txt
-rm -rf /PlexAniSync-master
-cd /plexanisync &&\
+cp -f /EmbyAniSync-master/*.py /embyanisync
+cp -f /EmbyAniSync-master/requirements.txt /embyanisync/requirements.txt
+rm -rf /EmbyAniSync-master
+cd /embyanisync &&\
 python -m pip install -r requirements.txt &&\
 cd ..
 echo "Update completed successfully"

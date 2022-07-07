@@ -8,11 +8,11 @@ groupmod -o -g "$PGID" tautulli
 usermod -o -u "$PUID" tautulli
 
 chown -R tautulli:tautulli /config
-chown -R tautulli:tautulli /plexanisync
+chown -R tautulli:tautulli /embyanisync
 
 if [[ -z "${SETTINGS_FILE}" ]]; then
   echo "Updating settings.ini"
-  gosu tautulli "python" "/plexanisync/settingsupdater.py"
+  gosu tautulli "python" "/embyanisync/settingsupdater.py"
 else
   echo "Using custom config: "${SETTINGS_FILE}
 fi

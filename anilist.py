@@ -785,6 +785,9 @@ def update_episode_incremental(series: AnilistSeries, watched_episode_count: int
 def retrieve_season_mappings(title: str, season: int) -> List[AnilistCustomMapping]:
     season_mappings: List[AnilistCustomMapping] = []
 
+    # print(title)
+    # print(season)
+
     if CUSTOM_MAPPINGS and title.lower() in CUSTOM_MAPPINGS:
         season_mappings = CUSTOM_MAPPINGS[title.lower()]
         # filter mappings by season

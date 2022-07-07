@@ -11,7 +11,7 @@ RUN pip install --user --no-warn-script-location -r requirements.txt
 
 FROM python:3.9-slim
 
-WORKDIR /plexanisync
+WORKDIR /embyanisync
 
 # copy only the dependencies installation from the 1st stage image
 COPY --from=builder /root/.local /root/.local
@@ -20,17 +20,17 @@ RUN chmod -R a+rX /root
 ENV PATH=/root/.local:$PATH
 ENV PYTHONPATH=/root/.local/lib/python3.9/site-packages
 
-ENV PLEX_SECTION=Anime \
-    PLEX_URL=http://127.0.0.1:32400 \
-    PLEX_TOKEN='' \
+ENV EMBY_SECTION=Anime \
+    EMBY_URL=http://127.0.0.1:32400 \
+    EMBY_TOKEN='' \
     ANI_USERNAME='' \
     ANI_TOKEN='' \
     INTERVAL=3600
 
-COPY Docker/PlexAniSync/run/. .
+COPY Docker/EmbyAniSync/run/. .
 # copy code itself from context to image
 COPY . .
 
-LABEL org.opencontainers.image.documentation=https://github.com/RickDB/PlexAniSync/blob/master/Docker/PlexAniSync/README.md
+LABEL org.opencontainers.image.documentation=https://github.com/RickDB/EmbyAniSync/blob/master/Docker/EmbyAniSync/README.md
 
-CMD ["/plexanisync/runsync.sh"]
+CMD ["/embyanisync/runsync.sh"]
