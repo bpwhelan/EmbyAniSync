@@ -104,6 +104,17 @@ or
 
 This will run an initial sync of everything, start a flask server to open up an endpoint for emby to send a webhook POST, and schedule a full sync every 4 hours (configurable in the future :))
 
+
+### Step 6 - Webhook
+
+Using Emby Webhooks, we are able to sync a season as soon as we are done watching.
+
+Basic usage of this feature, more detailed instructions to come.
+
+#### Configure Webhook
+
+In Emby dashboard, you can create a webhook that points to your flask app:port/update_show, and sends on "Playback Stop" and "Mark Played"
+
 ## Optional features 
 
 All of this is copied over from the Parent Project so not 100% sure if accurate here.
@@ -179,7 +190,7 @@ https://github.com/Beannsss/EmbyAniSync/issues
 
 ## Planned
 
-Placeholder
+Instructions for webhook
 
 ## Credits
 
