@@ -9,3 +9,5 @@ logo\.psd
 settings\.ini
 update_anilist\.bat
 update_anilist_test\.bat
+.idea
+/embypython-4.7.5.0-py3-none-any.whl
