@@ -1,89 +1,67 @@
-# coding=utf-8
-import configparser
-import json
-import logging.handlers
-import os
-import sys
+from __future__ import print_function
 
-import coloredlogs
+from config import emby_settings, item_service, settings, users
+import logging
+import json
+
+from embypython import BaseItemDto
 
 import anilist
 import embymodule
 import graphql
-from _version import __version__
 from custom_mappings import read_custom_mappings
-from json import JSONEncoder
+from embyclasses import EmbyShow, EmbyWatchedSeries, EmbySeason
+from apscheduler.schedulers.background import BackgroundScheduler
+# app.py
 
-class ShowEncoder(JSONEncoder):
-    def default(self, o):
-        return o.__dict__
+from flask import Flask, request
 
-# Logger settings
-LOG_FILENAME = "EmbyAniSync.log"
 logger = logging.getLogger("EmbyAniSync")
+scheduler = BackgroundScheduler()
 
-# Add the rotating log message handler to the standard log
-handler = logging.handlers.RotatingFileHandler(
-    LOG_FILENAME, maxBytes=10000000, backupCount=5, encoding="utf-8"
-)
-handler.setLevel(logging.INFO)
-logger.addHandler(handler)
-
-# Debug log
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s %(levelname)s %(message)s",
-    handlers=[logging.FileHandler("EmbyAniSync-DEBUG.log", "w", "utf-8")],
-)
-
-# Install colored logs
-coloredlogs.install(fmt="%(asctime)s %(message)s", logger=logger)
+app = Flask(__name__)
 
 
-# Enable this if you want to also log all messages coming from imported libraries
-# coloredlogs.install(level='DEBUG')
+# webhook from emby
+@app.route('/update_show', methods=['POST'])
+def update_anilist():
+    data = json.loads(dict(request.form)['data'])
 
-## Settings section ##
+    if 'Item' not in data:
+        print('not an episode finished! Probably a test!')
+        return '200'
+    item = data['Item']
+    user = data['User']
+    user_id = user['Id']
+    user_name = user['Name']
+    # pprint(data)
 
+    # pprint(data['Item'])
+    series = item_service.get_items(ids=item['SeriesId'] + ',' + item['SeasonId'], include_item_types='Series,Season',
+                                    enable_user_data=True, user_id=user_id,
+                                    fields='ProviderIds,RecursiveItemCount,SortName,ProductionYear')
 
-def read_settings(settings_file) -> configparser.ConfigParser:
-    if not os.path.isfile(settings_file):
-        logger.critical(f"[CONFIG] Settings file file not found: {settings_file}")
-        sys.exit(1)
-    settings = configparser.ConfigParser()
-    settings.read(settings_file, encoding="utf-8")
-    return settings
+    emby_show: EmbyShow
 
+    #This will always be Series first!
+    for item in series.items:
+        item: BaseItemDto
+        # cleaned = clean_nones(item.to_dict())
+        # pprint(cleaned)
+        match item.type:
+            case 'Series':
+                emby_show = EmbyShow(item)
+            case 'Season':
+                emby_show.seasons.append(EmbySeason(item))
 
-SETTINGS_FILE = os.getenv("SETTINGS_FILE") or "settings.ini"
-
-if len(sys.argv) > 1:
-    SETTINGS_FILE = sys.argv[1]
-    logger.warning(f"Found settings file parameter and using: {SETTINGS_FILE}")
-
-settings = read_settings(SETTINGS_FILE)
-anilist_settings = settings["ANILIST"]
-emby_settings = settings["EMBY"]
-
-graphql.ANILIST_ACCESS_TOKEN = anilist_settings["access_token"].strip()
-
-if "skip_list_update" in anilist_settings:
-    graphql.ANILIST_SKIP_UPDATE = anilist_settings["skip_list_update"].lower().strip() == "true"
-
-if "emby_episode_count_priority" in anilist_settings:
-    anilist.ANILIST_EMBY_EPISODE_COUNT_PRIORITY = (
-        anilist_settings["emby_episode_count_priority"].lower().strip() == "true"
+    emby_watched_series: EmbyWatchedSeries = EmbyWatchedSeries(
+        emby_show.name.strip(),
+        emby_show.sort_name.strip(),
+        emby_show.name.strip(),
+        emby_show.year,
+        emby_show.seasons,
+        emby_show.anilist_id
     )
-
-if "log_failed_matches" in anilist_settings:
-    anilist.ANILIST_LOG_FAILED_MATCHES = (
-        anilist_settings["log_failed_matches"].lower().strip() == "true"
-    )
-
-
-## Startup section ##
-def start():
-    logger.info(f"EmbyAniSync - version: {__version__}")
 
     anilist.CUSTOM_MAPPINGS = read_custom_mappings()
 
@@ -100,42 +78,81 @@ def start():
     anilist.clean_failed_matches_file()
 
     # Anilist
-    anilist_username = anilist_settings["username"]
-    anilist_series = anilist.process_user_list(anilist_username)
+    user_config = settings['users.' + user_name]
+    anilist_username = user_config.get('anilist_username')
+    anilist_token = user_config.get('anilist_token')
 
-    # Emby
-    if anilist_series is None:
-        logger.error(
-            "Unable to retrieve AniList list, check your username and access token"
+    anilist_series = anilist.process_user_list(anilist_username, anilist_token)
+
+    anilist.match_to_emby(anilist_series, [emby_watched_series], anilist_token)
+
+    logger.info("Emby to AniList sync finished")
+    return '200'
+
+
+#cron to update everything
+@scheduler.scheduled_job(trigger='interval', hours=4)
+def update_all():
+    # pprint(data)
+    # pprint(data['Item'])
+    anilist.CUSTOM_MAPPINGS = read_custom_mappings()
+
+    if graphql.ANILIST_SKIP_UPDATE:
+        logger.warning(
+            "AniList skip list update enabled in settings, will match but NOT update your list"
         )
-    else:
-        if not anilist_series:
-            logger.error(
-                "No items found on your AniList list for additional processing later on"
-            )
 
-        embymodule.emby_settings = emby_settings
+    if anilist.ANILIST_EMBY_EPISODE_COUNT_PRIORITY:
+        logger.warning(
+            "Emby episode watched count will take priority over AniList, this will always update AniList watched count over Emby data"
+        )
+
+    anilist.clean_failed_matches_file()
+
+    for user in users:
+        user_config = settings['users.' + user]
+        if 'anilist_token' not in user_config:
+            continue
+        emby_user_id = user_config.get('emby_user_id')
+        anilist_username = user_config.get('anilist_username')
+        anilist_token = user_config.get('anilist_token')
+
         emby_anime_series = []
-        embymodule.get_anime_shows(emby_anime_series, emby_settings["anime_section_id"])
-        if emby_settings["anime_section_id2"] is not None:
-            embymodule.get_anime_shows(emby_anime_series, emby_settings["anime_section_id2"])
 
-    with open("test.json", 'w') as f:
-        json.dump(emby_anime_series, f, indent=4, cls=ShowEncoder)
+        for library in emby_settings.get('anime_section_ids').split(','):
+            embymodule.get_anime_shows(emby_anime_series, library, emby_user_id)
 
-        # if emby_anime_series is None:
-        #     logger.error("Found no Emby shows for processing")
-        #     emby_series_watched = None
-        # else:
         emby_series_watched = embymodule.get_watched_shows(emby_anime_series)
+
+        anilist_series = anilist.process_user_list(anilist_username, anilist_token)
 
         if emby_series_watched is None:
             logger.error("Found no watched shows on Emby for processing")
         else:
-            anilist.match_to_emby(anilist_series, emby_series_watched)
+            anilist.match_to_emby(anilist_series, emby_series_watched, anilist_token)
 
-    logger.info("Emby to AniList sync finished")
+        logger.info("Emby to AniList sync finished for {}", anilist_username)
+    return "200"
 
 
-if __name__ == "__main__":
-    start()
+def clean_nones(value):
+    """
+    Recursively remove all None values from dictionaries and lists, and returns
+    the result as a new dictionary or list.
+    """
+    if isinstance(value, list):
+        return [clean_nones(x) for x in value if x is not None]
+    elif isinstance(value, dict):
+        return {
+            key: clean_nones(val)
+            for key, val in value.items()
+            if val is not None
+        }
+    else:
+        return value
+
+
+# update all on first run
+update_all()
+
+app.run(host='0.0.0.0', port=8081)

@@ -1,0 +1,20 @@
+[EMBY]
+# Comma Seperated List of library ID for update_all
+anime_section_ids = 1,2
+url = https://example.domain.org
+apikey = EMBY_APIKEY_HERE
+
+
+[ANILIST]
+emby_episode_count_priority = False
+skip_list_update = False
+log_failed_matches = True
+
+[users]
+# Comma Seperated List of EMBY User Names (not sure if case sensitive) Corresponds to following subsections
+users = Bob,Billy
+[users.Bob]
+emby_user_id = EMBY_USER_ID_HERE
+anilist_username = ANILIST_USERNAME_HERE
+anilist_token = ANILIST_TOKEN_HERE
+[users.Billy]

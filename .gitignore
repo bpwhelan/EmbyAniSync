@@ -1,3 +1,6 @@
+*.iml
+.idea
+settings.ini
 \.vs/
 __pycache__/
 *.pyc
@@ -6,7 +9,6 @@ ApplyPEP8\.bat
 custom_mappings.yaml
 failed_matches\.txt
 logo\.psd
-settings\.ini
 update_anilist\.bat
 update_anilist_test\.bat
 .idea

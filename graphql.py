@@ -10,11 +10,11 @@ import requests
 logger = logging.getLogger("EmbyAniSync")
 
 
-ANILIST_ACCESS_TOKEN = ""
+# ANILIST_ACCESS_TOKEN = ""
 ANILIST_SKIP_UPDATE = False
 
 
-def search_by_id(anilist_id: int):
+def search_by_id(anilist_id: int, token: str):
     query = """
         query ($id: Int) {
         media: Media (id: $id, type: ANIME) {
@@ -43,11 +43,11 @@ def search_by_id(anilist_id: int):
 
     variables = {"id": anilist_id}
 
-    response = send_graphql_request(query, variables)
+    response = send_graphql_request(query, variables, token)
     return json.loads(response.content, object_hook=to_object)
 
 
-def search_by_name(anilist_show_name: str):
+def search_by_name(anilist_show_name: str, token: str):
     query = """
         query ($page: Int, $perPage: Int, $search: String) {
             Page (page: $page, perPage: $perPage) {
@@ -84,11 +84,11 @@ def search_by_name(anilist_show_name: str):
         """
     variables = {"search": anilist_show_name, "page": 1, "perPage": 50}
 
-    response = send_graphql_request(query, variables)
+    response = send_graphql_request(query, variables, token)
     return json.loads(response.content, object_hook=to_object)
 
 
-def fetch_user_list(username: str):
+def fetch_user_list(username: str, token: str):
     query = """
         query ($username: String) {
             MediaListCollection(userName: $username, type: ANIME) {
@@ -130,12 +130,12 @@ def fetch_user_list(username: str):
 
     variables = {"username": username}
 
-    response = send_graphql_request(query, variables)
+    response = send_graphql_request(query, variables, token)
     # print(response.content)
     return json.loads(response.content, object_hook=to_object)
 
 
-def update_series(media_id: int, progress: int, status: str):
+def update_series(media_id: int, progress: int, status: str, token: str):
     if ANILIST_SKIP_UPDATE:
         logger.warning("[ANILIST] Skip update is enabled in settings so not updating this item")
         return
@@ -151,13 +151,13 @@ def update_series(media_id: int, progress: int, status: str):
 
     variables = {"mediaId": media_id, "status": status, "progress": int(progress)}
 
-    send_graphql_request(query, variables)
+    send_graphql_request(query, variables, token)
 
 
-def send_graphql_request(query: str, variables: Dict[str, Any]):
+def send_graphql_request(query: str, variables: Dict[str, Any], token):
     url = "https://graphql.anilist.co"
     headers = {
-        "Authorization": "Bearer " + ANILIST_ACCESS_TOKEN,
+        "Authorization": "Bearer " + token,
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
