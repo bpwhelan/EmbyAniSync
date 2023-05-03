@@ -115,6 +115,8 @@ Basic usage of this feature, more detailed instructions to come.
 
 In Emby dashboard, you can create a webhook that points to your flask app:port/update_show, and sends on "Playback Stop" and "Mark Played"
 
+![image](https://user-images.githubusercontent.com/8314499/236054014-eec29591-7b93-4102-ad7c-956b58ee9660.png)
+
 ## Optional features 
 
 All of this is copied over from the Parent Project so not 100% sure if accurate here.
