@@ -68,7 +68,7 @@ Install the addtional requirements using the Python package installer (pip) from
 
 `pip install -r requirements.txt`
 
-Get Emby api client from releases and install.
+Get Emby api client from [releases](https://github.com/Beannsss/EmbyAniSync/releases) and install.
 
 `pip install atd embypython-4.7.5.0-py3-none-any.whl`
 
