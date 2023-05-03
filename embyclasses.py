@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
+from embypython import BaseItemDto, ProviderIdDictionary, UserItemDataDto
+from dataclasses_json import dataclass_json
+
+
+@dataclass_json
 @dataclass
 class Show:
     id: int
@@ -8,20 +13,22 @@ class Show:
     title: str
 
 
+@dataclass_json
 @dataclass
 class UserData:
-    played_percentage: int
-    unplayed_count: int
-    play_count: int
-    played: bool
+    played_percentage: float
+    unplayed_count: int = 0
+    play_count: int = 0
+    played: bool = False
 
-    def __init__(self, user_data):
-        self.played_percentage = user_data.get("PlayedPercentage")
-        self.unplayed_count = user_data.get("UnplayedItemCount", 0)
-        self.play_count = user_data.get("PlayCount", 0)
-        self.played = user_data.get("Played")
+    def __init__(self, user_data: UserItemDataDto):
+        self.played_percentage = user_data.played_percentage
+        self.unplayed_count = user_data.unplayed_item_count or 0
+        self.play_count = user_data.play_count or 0
+        self.played = user_data.played
 
 
+@dataclass_json
 @dataclass
 class ProviderID:
     anilist: str
@@ -29,42 +36,43 @@ class ProviderID:
     imdb: str
     tmdb: str
 
-    def __init__(self, provider_ids):
+    def __init__(self, provider_ids: ProviderIdDictionary):
         self.anilist = provider_ids.get('AniList')
         self.tvdb = provider_ids.get("Tvdb")
         self.imdb = provider_ids.get("Imdb")
         self.tmdb = provider_ids.get("Tmdb")
 
 
+@dataclass_json
 @dataclass
 class EmbySeason:
     id: str
     name: str
     sort_name: str
     series_id: str
-    parent_name: str
-    provider_ids: List[ProviderID]
+    provider_ids: ProviderID
     user_data: UserData
     season_number: int
     episodes_available: int
     episodes_played: int
     year: int
 
-    def __init__(self, item):
-        self.name = item.get("Name")
-        self.sort_name = item.get("SortName")
-        self.id = item.get("Id")
-        self.series_id = item.get("SeriesId")
-        self.provider_ids = ProviderID(item.get("ProviderIds"))
-        self.type = item.get("Type")
-        self.user_data = UserData(item.get("UserData"))
-        self.season_number = item.get("IndexNumber")
+    def __init__(self, item: BaseItemDto):
+        self.name = item.name
+        self.sort_name = item.sort_name
+        self.id = item.id
+        self.series_id = item.series_id
+        self.provider_ids = ProviderID(item.provider_ids)
+        self.type = item.type
+        self.user_data = UserData(item.user_data)
+        self.season_number = item.index_number
         self.anilist_id = self.provider_ids.anilist
-        self.episodes_available = item.get("RecursiveItemCount")
+        self.episodes_available = item.recursive_item_count
         self.episodes_played = self.episodes_available - self.user_data.unplayed_count
-        self.year = item.get("ProductionYear")
+        self.year = item.production_year
 
 
+@dataclass_json
 @dataclass
 class EmbyWatchedSeries:
     title: str
@@ -72,9 +80,10 @@ class EmbyWatchedSeries:
     title_original: str
     year: int
     seasons: List[EmbySeason]
-    anilist_id: Optional[int]
+    anilist_id: Optional[str]
 
 
+@dataclass_json
 @dataclass
 class EmbyShow:
     name: str
@@ -89,17 +98,16 @@ class EmbyShow:
     episodes_available: int = 0
     episodes_played: int = 0
 
-    def __init__(self, item):
-        print(item)
-        self.name = item.get("Name")
-        self.sort_name = item.get("SortName")
-        self.id = item.get("Id")
-        self.provider_ids = ProviderID(item.get("ProviderIds"))
-        self.type = item.get("Type")
-        self.user_data = UserData(item.get("UserData"))
+    def __init__(self, item: BaseItemDto):
+        self.name = item.name
+        self.sort_name = item.sort_name
+        self.id = item.id
+        self.provider_ids = ProviderID(item.provider_ids)
+        self.type = item.type
+        self.user_data = UserData(item.user_data)
         self.anilist_id = self.provider_ids.anilist
-        self.episodes_available = item.get("RecursiveItemCount", 0)
+        self.episodes_available = item.recursive_item_count
         # if self.episodes_available is not None:
         self.episodes_played = self.episodes_available - self.user_data.unplayed_count
         self.seasons = []
-        self.year = item.get("ProductionYear")
+        self.year = item.production_year

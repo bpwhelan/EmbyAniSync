@@ -12,3 +12,8 @@ ruamel.yaml==0.17.20
 ruamel.yaml.clib==0.2.6
 urllib3==1.26.8
 yamale==4.0.2
+
+embypython~=4.7.5.0
+APScheduler~=3.10.1
+Flask~=2.3.2
+jsonschema~=4.17.3

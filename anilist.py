@@ -7,7 +7,7 @@ import inflect
 
 from custom_mappings import AnilistCustomMapping
 from embyclasses import dataclass
-from embymodule import EmbyWatchedSeries
+from embyclasses import EmbyWatchedSeries
 from graphql import fetch_user_list, search_by_name, search_by_id, update_series
 
 logger = logging.getLogger("EmbyAniSync")
@@ -66,11 +66,11 @@ class AnilistSeries:
     ended_year: int
 
 
-def process_user_list(username: str) -> Optional[List[AnilistSeries]]:
+def process_user_list(username: str, token: str) -> Optional[List[AnilistSeries]]:
     logger.info(f"[ANILIST] Retrieving AniList list for user: {username}")
     anilist_series = []
     try:
-        list_items = fetch_user_list(username)
+        list_items = fetch_user_list(username, token)
         if not list_items:
             logger.critical(f"[ANILIST] Failed to return list for user: {username}")
             return None
@@ -163,9 +163,12 @@ def mediaitem_to_object(media_item) -> AnilistSeries:
     return series
 
 
-def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List[EmbyWatchedSeries]):
+def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched, token: str):
+    if type(emby_series_watched) is not list:
+        emby_series_watched = [emby_series_watched]
     logger.info("[ANILIST] Matching Emby series to Anilist")
     for emby_series in emby_series_watched:
+        emby_series: EmbyWatchedSeries
         emby_title = emby_series.title
         emby_title_sort = emby_series.title_sort
         emby_title_original = emby_series.title_original
@@ -206,12 +209,12 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List
                 )
 
                 add_or_update_show_by_id(
-                    anilist_series, emby_title, emby_year, True, emby_watched_episode_count_custom_mapping, custom_mapping_seasons_anilist_id
+                    anilist_series, emby_title, emby_year, True, emby_watched_episode_count_custom_mapping, custom_mapping_seasons_anilist_id, token
                 )
                 mapped_season_count = custom_mapping_season_count
 
                 if custom_mapping_season_count == len(emby_seasons):
-                    continue
+                    return
 
         # Start processing of any remaining seasons
         for emby_season in emby_seasons[mapped_season_count:]:
@@ -268,7 +271,7 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List
                             f"[ANILIST] Used custom mapping | title: {emby_title} | season: {season_number} | anilist id: {anime_id}"
                         )
 
-                        add_or_update_show_by_id(anilist_series, emby_title, emby_year, True, watchcount, anime_id)
+                        add_or_update_show_by_id(anilist_series, emby_title, emby_year, True, watchcount, anime_id, token)
 
                     # If custom match found continue to next
                     continue
@@ -276,7 +279,7 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List
                 # Reordered checks from above to ensure that custom mappings always take precedent
                 if emby_anilist_id:
                     logger.info(f"[ANILIST] Series {emby_title} has Anilist ID {emby_anilist_id} in its metadata, using that for updating")
-                    add_or_update_show_by_id(anilist_series, emby_title, emby_year, True, emby_watched_episode_count, emby_anilist_id)
+                    add_or_update_show_by_id(anilist_series, emby_title, emby_year, True, emby_watched_episode_count, emby_anilist_id, token)
                     continue
 
                 # Regular matching
@@ -311,7 +314,7 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List
                         logger.warning(
                             f"[ANILIST] Searching best match using title: {potential_title}"
                         )
-                        media_id_search = find_id_best_match(potential_title, emby_year)
+                        media_id_search = find_id_best_match(potential_title, emby_year, token)
 
                         if media_id_search:
                             logger.warning(
@@ -323,6 +326,7 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List
                                 emby_year,
                                 emby_watched_episode_count,
                                 False,
+                                token
                             )
                             break
 
@@ -342,6 +346,7 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List
                         emby_watched_episode_count,
                         matched_anilist_series,
                         skip_year_check,
+                        token
                     )
                     matched_anilist_series = []
             else:
@@ -356,7 +361,7 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List
                         logger.info(
                             f"[ANILIST] Used custom mapping |  title: {emby_title} | season: {season_number} | anilist id: {anime_id}"
                         )
-                        add_or_update_show_by_id(anilist_series, emby_title, emby_year, True, watchcount, anime_id)
+                        add_or_update_show_by_id(anilist_series, emby_title, emby_year, True, watchcount, anime_id, token)
 
                     # If custom match found continue to next
                     continue
@@ -364,7 +369,7 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List
                     if emby_year is not None:
                         media_id_search = find_id_season_best_match(
                             emby_title, season_number, emby_year
-                        )
+                        , token)
                     else:
                         logger.error(
                             "[ANILIST] Skipped season lookup as Emby did not supply "
@@ -374,7 +379,7 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched: List
 
                 emby_title_lookup = emby_title
                 if media_id_search:
-                    add_or_update_show_by_id(anilist_series, emby_title, emby_year, skip_year_check, emby_watched_episode_count, media_id_search)
+                    add_or_update_show_by_id(anilist_series, emby_title, emby_year, skip_year_check, emby_watched_episode_count, media_id_search, token)
                 else:
                     error_message = (
                         f"[ANILIST] Failed to find valid season title match on AniList for: {emby_title_lookup} season {season_number}"
@@ -420,7 +425,7 @@ def match_series_against_potential_titles(
                     matched_anilist_series.append(series)
 
 
-def find_id_season_best_match(title: str, season: int, year: int) -> Optional[int]:
+def find_id_season_best_match(title: str, season: int, year: int, token: str) -> Optional[int]:
     media_id = None
     # logger.warning('[ANILIST] Searching  AniList for title: %s | season: %s' % (title, season))
     match_title = clean_title(title)
@@ -460,7 +465,7 @@ def find_id_season_best_match(title: str, season: int, year: int) -> Optional[in
         match_title_season_suffix6.lower().strip(),
     ]
 
-    list_items = search_by_name(title)
+    list_items = search_by_name(title, token)
     if list_items:
         for item in list_items:
             if item[0] is not None and item[0].media:
@@ -519,13 +524,13 @@ def find_id_season_best_match(title: str, season: int, year: int) -> Optional[in
     return media_id
 
 
-def find_id_best_match(title: str, year: int) -> Optional[int]:
+def find_id_best_match(title: str, year: int, token: str) -> Optional[int]:
     media_id = None
     # logger.warning('[ANILIST] Searching  AniList for title: %s' % (title))
     match_title = clean_title(title)
     match_year = str(year)
 
-    list_items = search_by_name(title)
+    list_items = search_by_name(title, token)
     if list_items:
         for item in list_items:
             if item[0] is not None and item[0].media:
@@ -598,7 +603,7 @@ def find_id_best_match(title: str, year: int) -> Optional[int]:
     return media_id
 
 
-def add_or_update_show_by_id(anilist_series: List[AnilistSeries], emby_title: str, emby_year: int, skip_year_check: bool, watched_episodes: int, anime_id: int):
+def add_or_update_show_by_id(anilist_series: List[AnilistSeries], emby_title: str, emby_year: int, skip_year_check: bool, watched_episodes: int, anime_id: int, token: str):
     # print(anilist_series)
     # print(anime_id)
     series = find_mapped_series(anilist_series, anime_id)
@@ -612,6 +617,7 @@ def add_or_update_show_by_id(anilist_series: List[AnilistSeries], emby_title: st
             watched_episodes,
             [series],
             skip_year_check,
+            token
         )
     else:
         logger.warning(
@@ -623,13 +629,14 @@ def add_or_update_show_by_id(anilist_series: List[AnilistSeries], emby_title: st
             emby_year,
             watched_episodes,
             skip_year_check,
+            token
         )
 
 
 def add_by_id(
-    anilist_id: int, emby_title: str, emby_year: int, emby_watched_episode_count: int, ignore_year: bool
+    anilist_id: int, emby_title: str, emby_year: int, emby_watched_episode_count: int, ignore_year: bool, token: str
 ):
-    media_lookup_result = search_by_id(anilist_id)
+    media_lookup_result = search_by_id(anilist_id, token)
     if media_lookup_result:
         anilist_obj = search_item_to_obj(media_lookup_result)
         if anilist_obj:
@@ -639,6 +646,7 @@ def add_by_id(
                 emby_watched_episode_count,
                 [anilist_obj],
                 ignore_year,
+                token
             )
         else:
             logger.error(
@@ -651,7 +659,7 @@ def add_by_id(
 
 
 def update_entry(
-    title: str, year: int, watched_episode_count: int, matched_anilist_series: List[AnilistSeries], ignore_year: bool
+    title: str, year: int, watched_episode_count: int, matched_anilist_series: List[AnilistSeries], ignore_year: bool, token: str
 ):
     for series in matched_anilist_series:
         status = ""
@@ -717,7 +725,7 @@ def update_entry(
                 "AniList entry to completed"
             )
 
-            update_episode_incremental(series, watched_episode_count, anilist_episodes_watched, "COMPLETED")
+            update_episode_incremental(series, watched_episode_count, anilist_episodes_watched, "COMPLETED", token)
             return
         elif (
             watched_episode_count > anilist_episodes_watched
@@ -731,7 +739,7 @@ def update_entry(
                 f"episodes | updating AniList entry to {new_status}"
             )
 
-            update_episode_incremental(series, watched_episode_count, anilist_episodes_watched, new_status)
+            update_episode_incremental(series, watched_episode_count, anilist_episodes_watched, new_status, token)
             return
 
         elif watched_episode_count == anilist_episodes_watched:
@@ -752,7 +760,7 @@ def update_entry(
                 # Since AniList episode count is higher we don't loop thru
                 # updating the notification feed and just set the AniList
                 # episode count once
-                update_series(series.anilist_id, watched_episode_count, "CURRENT")
+                update_series(series.anilist_id, watched_episode_count, "CURRENT", token)
                 return
             else:
                 logger.info(
@@ -770,16 +778,16 @@ def update_entry(
             )
 
 
-def update_episode_incremental(series: AnilistSeries, watched_episode_count: int, anilist_episodes_watched: int, new_status: str):
+def update_episode_incremental(series: AnilistSeries, watched_episode_count: int, anilist_episodes_watched: int, new_status: str, token: str):
     # calculate episode difference and iterate up so activity stream lists
     # episodes watched if episode difference exceeds 32 only update most
     # recent as otherwise will flood the notification feed
     episode_difference = watched_episode_count - anilist_episodes_watched
     if episode_difference > 32:
-        update_series(series.anilist_id, watched_episode_count, new_status)
+        update_series(series.anilist_id, watched_episode_count, new_status, token)
     else:
         for current_episodes_watched in range(anilist_episodes_watched + 1, watched_episode_count + 1):
-            update_series(series.anilist_id, current_episodes_watched, new_status)
+            update_series(series.anilist_id, current_episodes_watched, new_status, token)
 
 
 def retrieve_season_mappings(title: str, season: int) -> List[AnilistCustomMapping]:
