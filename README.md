@@ -1,6 +1,6 @@
 # EmbyAniSync
 
-This has since gone through a large re-design to have a bit of it's own identity from EmbyAniSync. However, a lot of code is still used from the original project, including this readme. Credits to them.
+This has since gone through a large re-design to have a bit of it's own identity from PlexAniSync. However, a lot of code is still used from the original project, including this readme. Credits to them.
 
 
 ## Setup
