@@ -15,9 +15,14 @@ log_failed_matches = True
 
 [users]
 # Comma Seperated List of EMBY User Names (not sure if case sensitive) Corresponds to following subsections
-users = Bob,Billy
+users = Bob,Billy,Jane
 [users.Bob]
 emby_user_id = EMBY_USER_ID_HERE
 anilist_username = ANILIST_USERNAME_HERE
 anilist_token = ANILIST_TOKEN_HERE
 [users.Billy]
+emby_user_id = EMBY_USER_ID_HERE
+anilist_username = ANILIST_USERNAME_HERE
+anilist_token = ANILIST_TOKEN_HERE
+[users.Jane]
+#Having this empty does not break the script (just checks for anilist_token atm)

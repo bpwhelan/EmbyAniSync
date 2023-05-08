@@ -73,15 +73,15 @@ def update_anilist():
     emby_show: EmbyShow
 
     # This will always be Series first!
-    for item in series.items:
-        item: BaseItemDto
+    for series_item in series.items:
+        series_item: BaseItemDto
         # cleaned = clean_nones(item.to_dict())
         # pprint(cleaned)
-        match item.type:
+        match series_item.type:
             case 'Series':
-                emby_show = EmbyShow(item)
+                emby_show = EmbyShow(series_item)
             case 'Season':
-                emby_show.seasons.append(EmbySeason(item))
+                emby_show.seasons.append(EmbySeason(series_item))
 
     emby_watched_series: EmbyWatchedSeries = EmbyWatchedSeries(
         emby_show.name.strip(),
