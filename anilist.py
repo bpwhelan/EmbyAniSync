@@ -1,9 +1,11 @@
 # coding=utf-8
 import logging
 import re
+from logging.handlers import RotatingFileHandler
 from typing import Dict, List, Optional
 
 import inflect
+import coloredlogs
 
 from custom_mappings import AnilistCustomMapping
 from embyclasses import dataclass

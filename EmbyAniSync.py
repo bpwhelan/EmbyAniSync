@@ -1,7 +1,8 @@
 from __future__ import print_function
 
-from config import emby_settings, item_service, settings, users
-import logging
+import coloredlogs
+
+from config import emby_settings, item_service, settings, users, general_settings
 import json
 
 from embypython import BaseItemDto
@@ -11,21 +12,47 @@ import embymodule
 import graphql
 from custom_mappings import read_custom_mappings
 from embyclasses import EmbyShow, EmbyWatchedSeries, EmbySeason
-from apscheduler.schedulers.background import BackgroundScheduler
-# app.py
 
 from flask import Flask, request
 
+from flask_apscheduler import scheduler as apscheduler
+
+import logging
+from logging.handlers import RotatingFileHandler
+
+LOG_FILENAME = "EmbyAniSync.log"
 logger = logging.getLogger("EmbyAniSync")
-scheduler = BackgroundScheduler()
+
+# Add the rotating log message handler to the standard log
+handler = RotatingFileHandler(
+    LOG_FILENAME, maxBytes=10_000_000, backupCount=5, encoding="utf-8"
+)
+handler.setLevel(logging.INFO)
+logger.addHandler(handler)
+
+# Debug log
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    handlers=[logging.FileHandler("EmbyAniSync-DEBUG.log", "w", "utf-8")],
+)
+
+# Install colored logs
+coloredlogs.install(fmt="%(asctime)s %(message)s", logger=logger)
 
 app = Flask(__name__)
+
+logger.info('Server Started, Syncing first')
+
+scheduler = apscheduler.BackgroundScheduler()
 
 
 # webhook from emby
 @app.route('/update_show', methods=['POST'])
 def update_anilist():
     data = json.loads(dict(request.form)['data'])
+
+    logger.debug(json.dumps(data))
 
     if 'Item' not in data:
         print('not an episode finished! Probably a test!')
@@ -34,6 +61,8 @@ def update_anilist():
     user = data['User']
     user_id = user['Id']
     user_name = user['Name']
+
+    logger.info("Syncing based on new webhook! User: %s")
     # pprint(data)
 
     # pprint(data['Item'])
@@ -43,7 +72,7 @@ def update_anilist():
 
     emby_show: EmbyShow
 
-    #This will always be Series first!
+    # This will always be Series first!
     for item in series.items:
         item: BaseItemDto
         # cleaned = clean_nones(item.to_dict())
@@ -90,8 +119,7 @@ def update_anilist():
     return '200'
 
 
-#cron to update everything
-@scheduler.scheduled_job(trigger='interval', hours=4)
+# cron to update everything
 def update_all():
     # pprint(data)
     # pprint(data['Item'])
@@ -109,29 +137,22 @@ def update_all():
 
     anilist.clean_failed_matches_file()
 
-    for user in users:
-        user_config = settings['users.' + user]
-        if 'anilist_token' not in user_config:
-            continue
-        emby_user_id = user_config.get('emby_user_id')
-        anilist_username = user_config.get('anilist_username')
-        anilist_token = user_config.get('anilist_token')
-
+    for user in users.users:
         emby_anime_series = []
 
-        for library in emby_settings.get('anime_section_ids').split(','):
-            embymodule.get_anime_shows(emby_anime_series, library, emby_user_id)
+        for library in emby_settings.anime_section_ids:
+            embymodule.get_anime_shows(emby_anime_series, library, user.emby_user_id)
 
         emby_series_watched = embymodule.get_watched_shows(emby_anime_series)
 
-        anilist_series = anilist.process_user_list(anilist_username, anilist_token)
+        anilist_series = anilist.process_user_list(user.anilist_username, user.anilist_token)
 
         if emby_series_watched is None:
             logger.error("Found no watched shows on Emby for processing")
         else:
-            anilist.match_to_emby(anilist_series, emby_series_watched, anilist_token)
+            anilist.match_to_emby(anilist_series, emby_series_watched, user.anilist_token)
 
-        logger.info("Emby to AniList sync finished for {}", anilist_username)
+        logger.info("Emby to AniList sync finished for %s", user.anilist_username)
     return "200"
 
 
@@ -152,7 +173,12 @@ def clean_nones(value):
         return value
 
 
+scheduler.add_job(update_all, trigger='interval',
+                  hours=general_settings.scheduler_timeout)
+scheduler.start()
+
 # update all on first run
 update_all()
 
-app.run(host='0.0.0.0', port=8081)
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=8081)
