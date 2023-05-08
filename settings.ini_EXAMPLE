@@ -1,3 +1,6 @@
+[general]
+sync_all_timer = 12
+
 [EMBY]
 # Comma Seperated List of library ID for update_all
 anime_section_ids = 1,2

@@ -10,7 +10,7 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 from ruamel.yaml import YAML
 
-logger = logging.getLogger("PlexAniSync")
+logger = logging.getLogger("EmbyAniSync")
 MAPPING_FILE = "custom_mappings.yaml"
 REMOTE_MAPPING_FILE = "remote_mappings.yaml"
 
