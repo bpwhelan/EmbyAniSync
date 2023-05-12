@@ -188,7 +188,8 @@ https://github.com/Beannsss/EmbyAniSync/issues
 
 ## Planned
 
-3.7 compatibility if it is desired. I like a lot of 3.8->3.10 features so I decided to require 3.10
+- 3.7 compatibility if it is desired. I like a lot of 3.8->3.10 features so I decided to require 3.10
+- Jellyfin Support?
 
 ## Credits
 
