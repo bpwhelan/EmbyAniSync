@@ -1,15 +1,16 @@
 #Deriving the latest base image
 FROM python:3.11 AS builder
 
+COPY requirements.txt .
+# install dependencies to the local user directory (eg. /root/.local)
+RUN pip install --user --no-warn-script-location -r requirements.txt
+
+FROM python:3.11-slim
+
 WORKDIR /embyanisync
 
 #to COPY the remote file at working directory in container
 COPY ./ /embyanisync/
-# install dependencies to the local user directory (eg. /root/.local)
-RUN pip install --user --no-warn-script-location -r requirements.txt
-RUN pip install --user --no-warn-script-location embypython-4.7.5.0-py3-none-any.whl
-
-FROM python:3.11-slim
 
 COPY --from=builder /root/.local /root/.local
 RUN chmod -R a+rX /root
