@@ -68,10 +68,6 @@ Install the addtional requirements using the Python package installer (pip) from
 
 `pip install -r requirements.txt`
 
-Get Emby api client from [releases](https://github.com/Beannsss/EmbyAniSync/releases) and install.
-
-`pip install atd embypython-4.7.5.0-py3-none-any.whl`
-
 For advanced users, it is ideal to do this in a virtual environment, here is an example of what you can do before the pip install to install in a venv. This may not be 100% on point, but I'll edit later :)
 
 If you install reqs in a venv, make sure you either have the venv activated when you run, or specifically use the python executable in the venv.
