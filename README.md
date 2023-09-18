@@ -25,11 +25,13 @@ From the project directory rename `settings.ini.example` to `settings.ini`, open
 
 Add in your anime section id (open library in browser and it should be there under "parentId") as well as your url and apikey that you created in emby dashboard.
 
+URL should be {protocol}://{domain/ip}:{port}/emby. In the future this won't require /emby but for now that's how it is. 
+
 ```
 [EMBY]
 # Comma Seperated List of library ID for update_all
 anime_section_ids = 1,2
-url = https://example.domain.org
+url = https://example.domain.org/emby
 apikey = EMBY_APIKEY_HERE
 ```
 
