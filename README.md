@@ -25,7 +25,7 @@ From the project directory rename `settings.ini.example` to `settings.ini`, open
 
 Add in your anime section id (open library in browser and it should be there under "parentId") as well as your url and apikey that you created in emby dashboard.
 
-URL should be {protocol}://{domain/ip}:{port}/emby. In the future this won't require /emby but for now that's how it is. 
+URL should be {protocol}://{domain/ip}:{port}/emby. I don't think this actually needs /emby, but that's how it is documented in their api explorer.
 
 ```
 [EMBY]
@@ -45,7 +45,7 @@ https://anilist.co/api/v2/oauth/authorize?client_id=12485&response_type=token
 
 Make sure to copy the entire key as it is pretty long and paste that in the settings file under 'access_token', no need to enclose it just paste it as-is.
 
-To find your user, go to the individual user's settings page and you will find it in the url.
+*IMPORTANT:* To find your EMBY_USER_ID, go to the individual user's settings page and you will find it in the url.
 
 Also, make sure you don't use email for anilist_username.
 
