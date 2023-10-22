@@ -73,8 +73,6 @@ def process_user_list(username: str, token: str) -> Optional[List[AnilistItem]]:
     logger.info(f"[ANILIST] Retrieving AniList list for user: {username}")
     anilist_items = []
     try:
-        print(username)
-        print(token)
         list_items = fetch_user_list(username, token)
         if not list_items:
             logger.critical(f"[ANILIST] Failed to return list for user: {username}")

@@ -173,7 +173,6 @@ def send_graphql_request(query: str, variables: Dict[str, Any], token):
 
         else:
             response.raise_for_status()
-            print(response)
             # wait a bit to not overload AniList API
             time.sleep(0.20)
             return response
