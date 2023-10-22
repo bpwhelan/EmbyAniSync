@@ -12,6 +12,13 @@ class Show:
     anilistID: int
     title: str
 
+@dataclass_json
+@dataclass
+class Movie:
+    id: int
+    anilistID: int
+    title: str
+
 
 @dataclass_json
 @dataclass
@@ -110,4 +117,36 @@ class EmbyShow:
         # if self.episodes_available is not None:
         self.episodes_played = self.episodes_available - self.user_data.unplayed_count
         self.seasons = []
+        self.year = item.production_year
+
+
+@dataclass_json
+@dataclass
+class EmbyWatchedMovie:
+    title: str
+    title_sort: str
+    title_original: str
+    year: int
+    anilist_id: Optional[str]
+
+@dataclass_json
+@dataclass
+class EmbyMovie:
+    name: str
+    sort_name: str
+    id: str
+    provider_ids: ProviderID
+    type: str
+    user_data: UserData
+    anilist_id: str
+    year: int
+
+    def __init__(self, item: BaseItemDto):
+        self.name = item.name
+        self.sort_name = item.sort_name
+        self.id = item.id
+        self.provider_ids = ProviderID(item.provider_ids)
+        self.type = item.type
+        self.user_data = UserData(item.user_data)
+        self.anilist_id = self.provider_ids.anilist
         self.year = item.production_year

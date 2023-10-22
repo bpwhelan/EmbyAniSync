@@ -46,6 +46,16 @@ def get_anime_shows(emby_shows: List[EmbyShow], anime_section_id, user_id: str) 
     return emby_shows
 
 
+def get_anime_movies(emby_movies: List[EmbyMovie], anime_section_id, user_id: str) -> List[EmbyMovie]:
+    movies = item_service.get_items(parent_id=anime_section_id, recursive=True, include_item_types='Movie',
+                                    enable_user_data=True, user_id=user_id,
+                                    fields='ProviderIds,SortName,ProductionYear')
+    for item in movies.items:
+        item: BaseItemDto
+        emby_movies.append(EmbyMovie(item))
+
+    return emby_movies
+
 def get_anime_shows_filter(show_name):
     shows = get_anime_shows()
 
@@ -65,6 +75,26 @@ def get_anime_shows_filter(show_name):
     else:
         logger.info(f"[EMBY] Did not find {show_name} in anime series")
     return shows_filtered
+
+def get_anime_movies_filter(movie_name):
+    movies = get_anime_movies()
+
+    movies_filtered = []
+    for movie in movies:
+        movie_title_clean_without_year = movie.name
+        filter_title_clean_without_year = re.sub("[^A-Za-z0-9]+", "", movie_name)
+        movie_title_clean_without_year = re.sub(r"\(\d{4}\)", "", movie_title_clean_without_year)
+        movie_title_clean_without_year = re.sub("[^A-Za-z0-9]+", "", movie_title_clean_without_year)
+
+        if (movie.title.lower().strip() == movie_name.lower().strip()
+                or movie_title_clean_without_year.lower().strip() == filter_title_clean_without_year.lower().strip()):
+            movies_filtered.append(movie)
+
+    if movies_filtered:
+        logger.info("[EMBY] Found matching anime movie")
+    else:
+        logger.info(f"[EMBY] Did not find {movie_name} in anime movies")
+    return movies_filtered
 
 
 def get_watched_shows(shows: List[EmbyShow]) -> Optional[List[EmbyWatchedSeries]]:
@@ -168,6 +198,49 @@ def get_watched_shows(shows: List[EmbyShow]) -> Optional[List[EmbyWatchedSeries]
     else:
         return watched_series
 
+def get_watched_movies(movies: List[EmbyMovie]) -> Optional[List[EmbyWatchedMovie]]:
+    logger.info("[EMBY] Retrieving watch status for movies")
+    watched_movies: List[EmbyWatchedMovie] = []
+
+    for movie in movies:
+        try:
+            if hasattr(movie, "isWatched") and movie.isWatched:
+                anilist_id = movie.anilist_id
+                year = 1900  # fallback year
+                if movie.year:
+                    year = int(movie.year)
+
+                if not hasattr(movie, "sort_name"):
+                    movie.sort_name = movie.name
+                elif movie.sort_name == "":
+                    movie.sort_name = movie.name
+
+                # The following section is commented out as it appears to be handling original titles,
+                # similar to the commented out section in get_watched_shows.
+                # Uncomment and adjust if needed.
+                # if not hasattr(movie, 'originalTitle'):
+                #    movie.originalTitle = movie.title
+                # elif movie.originalTitle == '':
+                #    movie.originalTitle = movie.title
+                # movie.originalTitle = movie.name
+
+                watched_movie = EmbyWatchedMovie(
+                    movie.name.strip(),
+                    movie.sort_name.strip(),
+                    movie.name.strip(),  # Replace with movie.originalTitle.strip() if using original titles
+                    year,
+                    anilist_id
+                )
+                watched_movies.append(watched_movie)
+        except Exception:
+            logger.exception(f"[EMBY] Error occurred during processing of movie {movie}")
+
+    logger.info(f"[EMBY] Found {len(watched_movies)} watched movies")
+
+    if watched_movies is not None and len(watched_movies) == 0:
+        return None
+    else:
+        return watched_movies
 
 def get_watched_episodes_for_show_season(season: EmbySeason) -> int:
     episodes_watched = season.episodes_played
