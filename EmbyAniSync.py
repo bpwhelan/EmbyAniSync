@@ -67,7 +67,7 @@ def update_anilist():
 
     item_type = item.get('Type')
 
-    if item_type == 'Series' or item_type == 'Season':
+    if item_type == 'Series' or item_type == 'Season' or item_type == 'Episode':
 
         # pprint(data['Item'])
         series = item_service.get_items(ids=item['SeriesId'] + ',' + item['SeasonId'], include_item_types='Series,Season',
@@ -174,6 +174,7 @@ def update_all():
     for user in users.users:
         emby_anime_series = []
         emby_anime_movies = []
+        
 
         for library in emby_settings.anime_section_ids:
             embymodule.get_anime_shows(emby_anime_series, library, user.emby_user_id)
@@ -188,6 +189,11 @@ def update_all():
             logger.error("Found no watched shows on Emby for processing")
         else:
             anilist.match_to_emby(anilist_series, emby_series_watched, user.anilist_token)
+        
+        if emby_movies_watched is None:
+            logger.error("Found no watched movies on Emby for processing")
+        else:
+            anilist.match_to_emby(anilist_series, emby_movies_watched, user.anilist_token)
 
         logger.info("Emby to AniList sync finished for %s", user.anilist_username)
     return "200"

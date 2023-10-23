@@ -204,7 +204,7 @@ def get_watched_movies(movies: List[EmbyMovie]) -> Optional[List[EmbyWatchedMovi
 
     for movie in movies:
         try:
-            if hasattr(movie, "isWatched") and movie.isWatched:
+            if hasattr(movie, "user_data") and movie.user_data.played:
                 anilist_id = movie.anilist_id
                 year = 1900  # fallback year
                 if movie.year:

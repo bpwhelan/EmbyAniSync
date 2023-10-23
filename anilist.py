@@ -296,10 +296,10 @@ def match_to_emby(anilist_items: List[AnilistItem], emby_items, token: str):
                         add_or_update_show_by_id(anilist_items, emby_title, emby_year, True, watchcount, anime_id, token)
                 else:
                     logger.info(
-                            f"[ANILIST] Used custom mapping | title: {emby_title} | anilist id: {anime_id}"
+                            f"[ANILIST] Used custom mapping | title: {emby_title}"
                         )
 
-                    add_or_update_movie_by_id(anilist_items, emby_title, emby_year, True, True, anime_id, token)
+                    add_or_update_movie_by_id(anilist_items, emby_title, emby_year, True, True, season_mappings[0].anime_id, token)
                 # If custom match found continue to next
                 continue
 
