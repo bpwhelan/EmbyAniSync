@@ -239,6 +239,7 @@ def match_to_emby(anilist_items: List[AnilistItem], emby_items, token: str):
                     )
                     continue
         else:
+            # Custom mapping for movies
             movie_mapping = retrieve_season_mappings(emby_title, 1)
             matched_id = 0
             if movie_mapping:
