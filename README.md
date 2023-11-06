@@ -117,7 +117,8 @@ In Emby dashboard, you can create a webhook that points to your flask app:port/u
 
 ### Step 7 - Run as a service Systemd
 
-Enter the following command into you terminal to replacing nano with your prefered text editor
+Enter the following command into your terminal to create a new service file. 
+replacing nano with your preferred text editor
 
 ```bash
 sudo nano /etc/systemd/system/embyanisync.service
