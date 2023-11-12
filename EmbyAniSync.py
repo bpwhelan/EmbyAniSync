@@ -55,7 +55,7 @@ def update_anilist():
     logger.debug(json.dumps(data))
 
     if 'Item' not in data:
-        print('not an episode finished! Probably a test!')
+        print('not an episode or movie finished! Probably a test!')
         return '200'
     item = data['Item']
     user = data['User']

@@ -56,6 +56,8 @@ def get_anime_movies(emby_movies: List[EmbyMovie], anime_section_id, user_id: st
 
     return emby_movies
 
+
+# Following two functions could be merged, but they don't seem to be used anywhere
 def get_anime_shows_filter(show_name):
     shows = get_anime_shows()
 

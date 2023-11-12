@@ -10,7 +10,7 @@ import coloredlogs
 from custom_mappings import AnilistCustomMapping
 from embyclasses import dataclass
 from embyclasses import EmbyWatchedSeries, EmbyWatchedMovie
-from graphql import fetch_user_list, search_by_name, search_by_id, update_series
+from graphql import fetch_user_list, search_by_name, search_by_id, update_item
 
 logger = logging.getLogger("EmbyAniSync")
 CUSTOM_MAPPINGS: Dict[str, List[AnilistCustomMapping]] = {}
@@ -192,6 +192,7 @@ def match_to_emby(anilist_items: List[AnilistItem], emby_items, token: str):
 
         logger.info("--------------------------------------------------")
 
+        # Might be a better way to check whether item is a movie or show, but this works, however might break function on line 259? Haven't had any issues so far.
         if hasattr(emby_item, "seasons"):
             # Check if we have custom mappings for all seasons (One Piece for example)
             if len(emby_seasons) > 1:
@@ -239,7 +240,8 @@ def match_to_emby(anilist_items: List[AnilistItem], emby_items, token: str):
                     )
                     continue
         else:
-            # Custom mapping for movies
+            # Custom mapping for movies (Using the existing methos for season mappings seems to work fine with just hardcoding season number to 1) (But again, function on line 259??)
+            # Using the mappings https://raw.githubusercontent.com/RickDB/PlexAniSync-Custom-Mappings/main/movies-tmdb.en.yaml)
             movie_mapping = retrieve_season_mappings(emby_title, 1)
             matched_id = 0
             if movie_mapping:
@@ -728,7 +730,7 @@ def add_by_id(
             )
         else:
             logger.error(
-                "[ANILIST] failed to get anilist object for list adding, skipping series"
+                "[ANILIST] failed to get anilist object for list adding, skipping item"
             )
     else:
         logger.error(
@@ -737,45 +739,45 @@ def add_by_id(
 
 
 def update_entry(
-    title: str, year: int, watched_episode_count: int, matched_anilist_series: List[AnilistItem], ignore_year: bool, token: str
+    title: str, year: int, watched_episode_count: int, matched_anilist_item: List[AnilistItem], ignore_year: bool, token: str
 ):
-    for series in matched_anilist_series:
+    for item in matched_anilist_item:
         status = ""
         logger.info(f"[ANILIST] Found AniList entry for Emby title: {title}")
-        if hasattr(series, "status"):
-            status = series.status
+        if hasattr(item, "status"):
+            status = item.status
         # print(status)
         if status == "COMPLETED":
             logger.info(
-                "[ANILIST] Series is already marked as completed on AniList so skipping update"
+                "[ANILIST] Item is already marked as completed on AniList so skipping update"
             )
             return
 
-        if hasattr(series, "started_year") and year != series.started_year:
+        if hasattr(item, "started_year") and year != item.started_year:
             if ignore_year is False:
                 logger.error(
-                    f"[ANILIST] Series year did not match (skipping update) => Emby has {year} and AniList has {series.started_year}"
+                    f"[ANILIST] Item year did not match (skipping update) => Emby has {year} and AniList has {item.started_year}"
                 )
                 continue
             elif ignore_year is True:
                 logger.info(
-                    f"[ANILIST] Series year did not match however skip year check was given so adding anyway => "
-                    f"Emby has {year} and AniList has {series.started_year}"
+                    f"[ANILIST] Item year did not match however skip year check was given so adding anyway => "
+                    f"Emby has {year} and AniList has {item.started_year}"
                 )
 
-        if series.isMovie:
-            update_series(series.anilist_id, watched_episode_count, "COMPLETED", token)
+        if item.isMovie:
+            update_item(item.anilist_id, watched_episode_count, "COMPLETED", token)
 
         anilist_total_episodes = 0
         anilist_episodes_watched = 0
         anilist_media_status = ""
 
-        if hasattr(series, "media_status"):
-            anilist_media_status = series.media_status
-        if hasattr(series, "episodes"):
-            if series.episodes is not None:
+        if hasattr(item, "media_status"):
+            anilist_media_status = item.media_status
+        if hasattr(item, "episodes"):
+            if item.episodes is not None:
                 try:
-                    anilist_total_episodes = int(series.episodes)
+                    anilist_total_episodes = int(item.episodes)
                 except BaseException:
                     logger.error(
                         "Series has unknown total total episodes on AniList "
@@ -789,9 +791,9 @@ def update_entry(
                     "on AniList (NoneType), using Emby watched count as fallback"
                 )
                 anilist_total_episodes = watched_episode_count
-        if hasattr(series, "progress"):
+        if hasattr(item, "progress"):
             try:
-                anilist_episodes_watched = int(series.progress)
+                anilist_episodes_watched = int(item.progress)
             except BaseException:
                 pass
 
@@ -806,7 +808,7 @@ def update_entry(
                 "AniList entry to completed"
             )
 
-            update_episode_incremental(series, watched_episode_count, anilist_episodes_watched, "COMPLETED", token)
+            update_episode_incremental(item, watched_episode_count, anilist_episodes_watched, "COMPLETED", token)
             return
         elif (
             watched_episode_count > anilist_episodes_watched
@@ -820,7 +822,7 @@ def update_entry(
                 f"episodes | updating AniList entry to {new_status}"
             )
 
-            update_episode_incremental(series, watched_episode_count, anilist_episodes_watched, new_status, token)
+            update_episode_incremental(item, watched_episode_count, anilist_episodes_watched, new_status, token)
             return
 
         elif watched_episode_count == anilist_episodes_watched:
@@ -841,7 +843,7 @@ def update_entry(
                 # Since AniList episode count is higher we don't loop thru
                 # updating the notification feed and just set the AniList
                 # episode count once
-                update_series(series.anilist_id, watched_episode_count, "CURRENT", token)
+                update_item(series.anilist_id, watched_episode_count, "CURRENT", token)
                 return
             else:
                 logger.info(
@@ -865,10 +867,10 @@ def update_episode_incremental(series: AnilistItem, watched_episode_count: int, 
     # recent as otherwise will flood the notification feed
     episode_difference = watched_episode_count - anilist_episodes_watched
     if episode_difference > 32:
-        update_series(series.anilist_id, watched_episode_count, new_status, token)
+        update_item(series.anilist_id, watched_episode_count, new_status, token)
     else:
         for current_episodes_watched in range(anilist_episodes_watched + 1, watched_episode_count + 1):
-            update_series(series.anilist_id, current_episodes_watched, new_status, token)
+            update_item(series.anilist_id, current_episodes_watched, new_status, token)
 
 
 def retrieve_season_mappings(title: str, season: int) -> List[AnilistCustomMapping]:

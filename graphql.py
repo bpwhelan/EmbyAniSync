@@ -47,7 +47,7 @@ def search_by_id(anilist_id: int, token: str):
     return json.loads(response.content, object_hook=to_object)
 
 
-def search_by_name(anilist_show_name: str, token: str):
+def search_by_name(anilist_item_name: str, token: str):
     query = """
         query ($page: Int, $perPage: Int, $search: String) {
             Page (page: $page, perPage: $perPage) {
@@ -82,7 +82,7 @@ def search_by_name(anilist_show_name: str, token: str):
             }
         }
         """
-    variables = {"search": anilist_show_name, "page": 1, "perPage": 50}
+    variables = {"search": anilist_item_name, "page": 1, "perPage": 50}
 
     response = send_graphql_request(query, variables, token)
     return json.loads(response.content, object_hook=to_object)
@@ -135,7 +135,7 @@ def fetch_user_list(username: str, token: str):
     return json.loads(response.content, object_hook=to_object)
 
 
-def update_series(media_id: int, progress: int, status: str, token: str):
+def update_item(media_id: int, progress: int, status: str, token: str):
     if ANILIST_SKIP_UPDATE:
         logger.warning("[ANILIST] Skip update is enabled in settings so not updating this item")
         return
