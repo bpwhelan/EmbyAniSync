@@ -17,12 +17,27 @@ REMOTE_MAPPING_FILE = "remote_mappings.yaml"
 
 @dataclass
 class AnilistCustomMapping:
+    """Represents a custom season-to-AniList-ID mapping entry.
+
+    Attributes:
+        season: The Emby season number this mapping applies to.
+        anime_id: The corresponding AniList media ID.
+        start: The starting episode offset within the season.
+    """
     season: int
     anime_id: int
     start: int
 
 
 def read_custom_mappings() -> Dict[str, List[AnilistCustomMapping]]:
+    """Load and validate custom mappings from the local YAML file and any remote URLs.
+
+    Reads custom_mappings.yaml, validates against the JSON schema, fetches any
+    remote mapping files referenced in 'remote-urls', and merges all entries.
+
+    Returns:
+        A dict mapping lowercased series titles to their list of AnilistCustomMapping entries.
+    """
     custom_mappings: Dict[str, List[AnilistCustomMapping]] = {}
     if not os.path.isfile(MAPPING_FILE):
         logger.info(f"[MAPPING] Custom map file not found: {MAPPING_FILE}")
@@ -66,6 +81,13 @@ def read_custom_mappings() -> Dict[str, List[AnilistCustomMapping]]:
 
 
 def add_mappings(custom_mappings, mapping_location, file_mappings):
+    """Parse mapping entries from a YAML structure and add them to the custom_mappings dict.
+
+    Args:
+        custom_mappings: The target dict to populate (mutated in-place).
+        mapping_location: Source file path/name for logging.
+        file_mappings: Parsed YAML content with 'entries' key.
+    """
     # handles missing and empty 'entries'
     entries = file_mappings.get('entries', []) or []
     for file_entry in entries:
@@ -92,6 +114,14 @@ def add_mappings(custom_mappings, mapping_location, file_mappings):
 
 # Get the custom mappings from the web.
 def get_custom_mapping_remote(file_mappings) -> List[Tuple[str, str]]:
+    """Download remote custom mapping files referenced in the local mappings.
+
+    Args:
+        file_mappings: The parsed local custom_mappings.yaml with 'remote-urls' key.
+
+    Returns:
+        A list of (filename, yaml_content) tuples for each successfully downloaded remote mapping.
+    """
     custom_mappings_remote: List[Tuple[str, str]] = []
     # handles missing and empty 'remote-urls'
     remote_mappings_urls: List[str] = file_mappings.get('remote-urls', []) or []

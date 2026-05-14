@@ -23,6 +23,19 @@ class HostNameIgnoringAdapter(HTTPAdapter):
 
 
 def get_anime_shows(emby_shows: List[EmbyShow], anime_section_id, user_id: str) -> List[EmbyShow]:
+    """Fetch all anime series and their seasons from an Emby library section.
+
+    Retrieves series-level and season-level items from the Emby API, matches
+    seasons to their parent series, and populates the emby_shows list.
+
+    Args:
+        emby_shows: Accumulator list to append discovered shows (mutated in-place).
+        anime_section_id: The Emby library section/parent ID to query.
+        user_id: The Emby user ID for user-specific watch data.
+
+    Returns:
+        The updated list of EmbyShow objects.
+    """
     series = item_service.get_items(parent_id=anime_section_id, recursive=True, include_item_types='Series',
                                     enable_user_data=True, user_id=user_id,
                                     fields='ProviderIds,RecursiveItemCount,SortName,ProductionYear')
@@ -47,6 +60,14 @@ def get_anime_shows(emby_shows: List[EmbyShow], anime_section_id, user_id: str) 
 
 
 def get_anime_shows_filter(show_name):
+    """Filter anime shows by title, matching against cleaned alphanumeric names.
+
+    Args:
+        show_name: The title to search/filter for.
+
+    Returns:
+        A list of matching EmbyShow objects.
+    """
     shows = get_anime_shows()
 
     shows_filtered = []
@@ -68,6 +89,18 @@ def get_anime_shows_filter(show_name):
 
 
 def get_watched_shows(shows: List[EmbyShow]) -> Optional[List[EmbyWatchedSeries]]:
+    """Build a list of watched series from Emby show data.
+
+    Processes each show's seasons, filtering out season 0 and unwatched
+    seasons, and constructs EmbyWatchedSeries objects. Also handles OVAs
+    and movies that lack season structure.
+
+    Args:
+        shows: List of EmbyShow objects with populated season data.
+
+    Returns:
+        A list of EmbyWatchedSeries, or None if no watched series found.
+    """
     logger.info("[EMBY] Retrieving watch count for series")
     watched_series: List[EmbyWatchedSeries] = []
     ovas_found = 0
@@ -172,6 +205,14 @@ def get_watched_shows(shows: List[EmbyShow]) -> Optional[List[EmbyWatchedSeries]
 
 
 def get_watched_episodes_for_show_season(season: EmbySeason) -> int:
+    """Get the number of watched episodes for a specific season.
+
+    Args:
+        season: An EmbySeason object.
+
+    Returns:
+        The number of episodes played in this season.
+    """
     episodes_watched = season.episodes_played
 
     logger.info(f'[EMBY] {episodes_watched} episodes watched for {season.parent_name} season {season.season_number}')

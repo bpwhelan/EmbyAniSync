@@ -8,6 +8,7 @@ from dataclasses_json import dataclass_json
 @dataclass_json
 @dataclass
 class Show:
+    """Lightweight representation of an anime show with its AniList ID."""
     id: int
     anilistID: int
     title: str
@@ -16,12 +17,18 @@ class Show:
 @dataclass_json
 @dataclass
 class UserData:
+    """User-specific playback data for an Emby item (play count, watched status, etc.)."""
     played_percentage: float
     unplayed_count: int = 0
     play_count: int = 0
     played: bool = False
 
     def __init__(self, user_data: UserItemDataDto):
+        """Map Emby UserItemDataDto to a simplified UserData.
+
+        Args:
+            user_data: The Emby API user data DTO.
+        """
         self.played_percentage = user_data.played_percentage
         self.unplayed_count = user_data.unplayed_item_count or 0
         self.play_count = user_data.play_count or 0
@@ -31,12 +38,18 @@ class UserData:
 @dataclass_json
 @dataclass
 class ProviderID:
+    """External provider IDs (AniList, TVDB, IMDB, TMDB) for an Emby item."""
     anilist: str
     tvdb: str
     imdb: str
     tmdb: str
 
     def __init__(self, provider_ids: ProviderIdDictionary):
+        """Extract provider IDs from an Emby ProviderIdDictionary.
+
+        Args:
+            provider_ids: The Emby provider ID dictionary.
+        """
         self.anilist = provider_ids.get('AniList')
         self.tvdb = provider_ids.get("Tvdb")
         self.imdb = provider_ids.get("Imdb")
@@ -46,6 +59,7 @@ class ProviderID:
 @dataclass_json
 @dataclass
 class EmbySeason:
+    """Represents a single season of a show in Emby with watch progress."""
     id: str
     name: str
     sort_name: str
@@ -58,6 +72,11 @@ class EmbySeason:
     year: int
 
     def __init__(self, item: BaseItemDto):
+        """Construct an EmbySeason from an Emby BaseItemDto.
+
+        Args:
+            item: A Season-type BaseItemDto from the Emby API.
+        """
         self.name = item.name
         self.sort_name = item.sort_name
         self.id = item.id
@@ -75,6 +94,7 @@ class EmbySeason:
 @dataclass_json
 @dataclass
 class EmbyWatchedSeries:
+    """A watched series combining Emby metadata with season watch progress."""
     title: str
     title_sort: str
     title_original: str
@@ -86,6 +106,7 @@ class EmbyWatchedSeries:
 @dataclass_json
 @dataclass
 class EmbyShow:
+    """Full representation of an anime series from Emby with all metadata and seasons."""
     name: str
     sort_name: str
     id: str
@@ -99,6 +120,11 @@ class EmbyShow:
     episodes_played: int = 0
 
     def __init__(self, item: BaseItemDto):
+        """Construct an EmbyShow from an Emby BaseItemDto.
+
+        Args:
+            item: A Series-type BaseItemDto from the Emby API.
+        """
         self.name = item.name
         self.sort_name = item.sort_name
         self.id = item.id

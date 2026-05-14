@@ -53,6 +53,15 @@ scheduler = apscheduler.BackgroundScheduler()
 # webhook from emby
 @app.route('/update_show', methods=['POST'])
 def update_anilist():
+    """Handle incoming Emby webhook for a single show update.
+
+    Receives a POST payload from Emby when an episode finishes playing,
+    retrieves the series/season metadata, and triggers an AniList sync
+    for the affected user.
+
+    Returns:
+        str: HTTP 200 status as a string.
+    """
     data = request.json
 
     logger.warning(data)
@@ -126,6 +135,15 @@ def update_anilist():
 
 # cron to update everything
 def update_all():
+    """Perform a full sync of all configured users' Emby libraries to AniList.
+
+    Iterates through every configured user, fetches their watched anime from
+    all configured Emby library sections, and matches/updates the corresponding
+    AniList entries. Called on startup and periodically via the scheduler.
+
+    Returns:
+        str: HTTP 200 status as a string.
+    """
     # pprint(data)
     # pprint(data['Item'])
     anilist.CUSTOM_MAPPINGS = read_custom_mappings()
@@ -161,10 +179,24 @@ def update_all():
     return "200"
 
 def save_data_to_pickle(data, filename):
+    """Serialize data to a pickle file.
+
+    Args:
+        data: The Python object to serialize.
+        filename: Path to the output pickle file.
+    """
     with open(filename, 'wb') as f:
         pickle.dump(data, f)
 
 def load_data_from_pickle(filename):
+    """Deserialize data from a pickle file.
+
+    Args:
+        filename: Path to the pickle file to read.
+
+    Returns:
+        The deserialized Python object.
+    """
     with open(filename, 'rb') as f:
         return pickle.load(f)
 

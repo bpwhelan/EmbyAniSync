@@ -22,6 +22,14 @@ ANILIST_LOG_FAILED_MATCHES = False
 
 
 def int_to_roman_numeral(decimal: int) -> str:
+    """Convert an integer to its Roman numeral representation.
+
+    Args:
+        decimal: An integer between 1 and 3999.
+
+    Returns:
+        The Roman numeral string, or the original value if not a valid integer.
+    """
     if not isinstance(decimal, type(1)):
         return decimal
     if not 0 < decimal < 4000:
@@ -37,12 +45,18 @@ def int_to_roman_numeral(decimal: int) -> str:
 
 
 def log_to_file(message: str):
+    """Append a message to the failed_matches.txt log file.
+
+    Args:
+        message: The error/failure message to log.
+    """
     file = open("failed_matches.txt", "a+", encoding="utf-8")
     file.write(f"{message}\n")
     file.close()
 
 
 def clean_failed_matches_file():
+    """Clear the failed_matches.txt file by overwriting it with empty content."""
     try:
         # create or overwrite the file with empty content
         open("failed_matches.txt", 'w', encoding="utf-8").close()
@@ -69,6 +83,15 @@ class AnilistSeries:
 
 
 def process_user_list(username: str, token: str) -> Optional[List[AnilistSeries]]:
+    """Fetch and parse a user's full AniList anime list.
+
+    Args:
+        username: The AniList username.
+        token: The AniList API bearer token.
+
+    Returns:
+        A list of AnilistSeries objects, or None if the request fails.
+    """
     logger.info(f"[ANILIST] Retrieving AniList list for user: {username}")
     anilist_series = []
     try:
@@ -95,6 +118,14 @@ def process_user_list(username: str, token: str) -> Optional[List[AnilistSeries]
 
 
 def search_item_to_obj(item) -> Optional[AnilistSeries]:
+    """Convert an AniList search result item to an AnilistSeries object.
+
+    Args:
+        item: A raw search result from the AniList GraphQL API.
+
+    Returns:
+        An AnilistSeries object, or None if conversion fails.
+    """
     try:
         if item:
             return mediaitem_to_object(item.data)
@@ -104,6 +135,14 @@ def search_item_to_obj(item) -> Optional[AnilistSeries]:
 
 
 def mediaitem_to_object(media_item) -> AnilistSeries:
+    """Map a raw AniList media item (namedtuple) to an AnilistSeries dataclass.
+
+    Args:
+        media_item: A namedtuple with media, status, and progress attributes.
+
+    Returns:
+        A populated AnilistSeries instance.
+    """
     anilist_id = media_item.media.id
     series_type = ""
     series_format = ""
@@ -166,6 +205,17 @@ def mediaitem_to_object(media_item) -> AnilistSeries:
 
 
 def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched, token: str):
+    """Match Emby watched series to AniList entries and update progress.
+
+    Iterates through all Emby watched series and their seasons, applies
+    custom mappings where available, and either updates existing AniList
+    entries or adds new ones.
+
+    Args:
+        anilist_series: The user's current AniList anime list.
+        emby_series_watched: List of EmbyWatchedSeries (or a single instance).
+        token: The AniList API bearer token.
+    """
     if type(emby_series_watched) is not list:
         emby_series_watched = [emby_series_watched]
     logger.info("[ANILIST] Matching Emby series to Anilist")
@@ -394,6 +444,15 @@ def match_to_emby(anilist_series: List[AnilistSeries], emby_series_watched, toke
 
 
 def find_mapped_series(anilist_series: List[AnilistSeries], anime_id: int):
+    """Find a series in the user's AniList list by its AniList ID.
+
+    Args:
+        anilist_series: The user's AniList anime list.
+        anime_id: The AniList media ID to search for.
+
+    Returns:
+        The matching AnilistSeries, or None if not found.
+    """
     # TODO Int comparison wasn't working for me? $#@!
     return next(filter(lambda s: str(s.anilist_id) == str(anime_id), anilist_series), None)
 
@@ -401,6 +460,16 @@ def find_mapped_series(anilist_series: List[AnilistSeries], anime_id: int):
 def match_series_against_potential_titles(
     series: AnilistSeries, potential_titles: List[str], matched_anilist_series: List[AnilistSeries]
 ):
+    """Check if an AniList series matches any of the potential Emby titles.
+
+    Compares the series' English title, Romaji title, and synonyms against
+    the list of potential titles. Appends matches to matched_anilist_series.
+
+    Args:
+        series: An AnilistSeries to check.
+        potential_titles: Lowercased candidate titles from Emby.
+        matched_anilist_series: Accumulator list for matched series (mutated in-place).
+    """
     if series.title_english:
         if series.title_english.lower() in potential_titles:
             matched_anilist_series.append(series)
@@ -429,6 +498,20 @@ def match_series_against_potential_titles(
 
 
 def find_id_season_best_match(title: str, season: int, year: int, token: str) -> Optional[int]:
+    """Search AniList for the best match for a specific season of a show.
+
+    Generates potential season title variants (Roman numerals, ordinals, etc.)
+    and searches AniList, filtering by year to avoid matching prequels.
+
+    Args:
+        title: The base series title from Emby.
+        season: The season number to search for.
+        year: The original series start year (used to filter older entries).
+        token: The AniList API bearer token.
+
+    Returns:
+        The AniList media ID if a match is found, otherwise None.
+    """
     media_id = None
     # logger.warning('[ANILIST] Searching  AniList for title: %s | season: %s' % (title, season))
     match_title = clean_title(title)
@@ -528,6 +611,16 @@ def find_id_season_best_match(title: str, season: int, year: int, token: str) ->
 
 
 def find_id_best_match(title: str, year: int, token: str) -> Optional[int]:
+    """Search AniList for the best title+year match for a series.
+
+    Args:
+        title: The series title from Emby.
+        year: The production year from Emby.
+        token: The AniList API bearer token.
+
+    Returns:
+        The AniList media ID if a match is found, otherwise None.
+    """
     media_id = None
     # logger.warning('[ANILIST] Searching  AniList for title: %s' % (title))
     match_title = clean_title(title)
@@ -607,6 +700,17 @@ def find_id_best_match(title: str, year: int, token: str) -> Optional[int]:
 
 
 def add_or_update_show_by_id(anilist_series: List[AnilistSeries], emby_title: str, emby_year: int, skip_year_check: bool, watched_episodes: int, anime_id: int, token: str):
+    """Update an existing AniList entry or add a new one by AniList ID.
+
+    Args:
+        anilist_series: The user's current AniList anime list.
+        emby_title: The series title from Emby (for logging).
+        emby_year: The production year from Emby.
+        skip_year_check: Whether to skip year validation.
+        watched_episodes: Number of episodes watched on Emby.
+        anime_id: The AniList media ID.
+        token: The AniList API bearer token.
+    """
     # print(anilist_series)
     # print(emby_title)
     # print(anime_id)
@@ -640,6 +744,16 @@ def add_or_update_show_by_id(anilist_series: List[AnilistSeries], emby_title: st
 def add_by_id(
     anilist_id: int, emby_title: str, emby_year: int, emby_watched_episode_count: int, ignore_year: bool, token: str
 ):
+    """Add a new series to AniList by looking it up by ID and updating.
+
+    Args:
+        anilist_id: The AniList media ID to add.
+        emby_title: The series title from Emby (for logging).
+        emby_year: The production year from Emby.
+        emby_watched_episode_count: Episodes watched on Emby.
+        ignore_year: Whether to skip year validation.
+        token: The AniList API bearer token.
+    """
     media_lookup_result = search_by_id(anilist_id, token)
     if media_lookup_result:
         anilist_obj = search_item_to_obj(media_lookup_result)
@@ -665,6 +779,19 @@ def add_by_id(
 def update_entry(
     title: str, year: int, watched_episode_count: int, matched_anilist_series: List[AnilistSeries], ignore_year: bool, token: str
 ):
+    """Update AniList entries for matched series based on Emby watch progress.
+
+    Handles completion detection, episode count comparison, year validation,
+    and decides whether to update, skip, or mark as completed.
+
+    Args:
+        title: The series title from Emby.
+        year: The production year from Emby.
+        watched_episode_count: Episodes watched on Emby.
+        matched_anilist_series: AniList series that matched the Emby title.
+        ignore_year: Whether to skip year validation.
+        token: The AniList API bearer token.
+    """
     for series in matched_anilist_series:
         status = ""
         logger.info(f"[ANILIST] Found AniList entry for Emby title: {title}")
@@ -783,6 +910,18 @@ def update_entry(
 
 
 def update_episode_incremental(series: AnilistSeries, watched_episode_count: int, anilist_episodes_watched: int, new_status: str, token: str):
+    """Incrementally update episode progress on AniList to populate the activity feed.
+
+    If the difference exceeds 32 episodes, updates once to avoid flooding
+    the notification feed.
+
+    Args:
+        series: The AniList series to update.
+        watched_episode_count: Target episode count from Emby.
+        anilist_episodes_watched: Current episode count on AniList.
+        new_status: The AniList status to set (CURRENT, COMPLETED, etc.).
+        token: The AniList API bearer token.
+    """
     # calculate episode difference and iterate up so activity stream lists
     # episodes watched if episode difference exceeds 32 only update most
     # recent as otherwise will flood the notification feed
@@ -795,6 +934,15 @@ def update_episode_incremental(series: AnilistSeries, watched_episode_count: int
 
 
 def retrieve_season_mappings(title: str, season: int) -> List[AnilistCustomMapping]:
+    """Look up custom season-to-AniList-ID mappings for a given title and season.
+
+    Args:
+        title: The series title to look up.
+        season: The season number to filter by.
+
+    Returns:
+        A list of AnilistCustomMapping entries for the season, or empty list.
+    """
     season_mappings: List[AnilistCustomMapping] = []
 
     # print(title)
@@ -809,6 +957,16 @@ def retrieve_season_mappings(title: str, season: int) -> List[AnilistCustomMappi
 
 
 def map_watchcount_to_seasons(title: str, season_mappings: List[AnilistCustomMapping], watched_episodes: int) -> Dict[int, int]:
+    """Distribute watched episode count across multiple AniList IDs based on custom mappings.
+
+    Args:
+        title: The series title (for logging).
+        season_mappings: Custom mappings defining episode start offsets per AniList ID.
+        watched_episodes: Total episodes watched in this Emby season.
+
+    Returns:
+        A dict mapping AniList media IDs to their respective watched episode counts.
+    """
     # mapping from anilist-id to watched episodes
     episodes_in_anilist_entry: Dict[int, int] = {}
     total_mapped_episodes = 0
@@ -830,4 +988,12 @@ def map_watchcount_to_seasons(title: str, season_mappings: List[AnilistCustomMap
 
 
 def clean_title(title: str) -> str:
+    """Normalize a title by removing all non-alphanumeric characters and lowercasing.
+
+    Args:
+        title: The title string to clean.
+
+    Returns:
+        A lowercase alphanumeric-only string.
+    """
     return re.sub("[^A-Za-z0-9]+", "", title.lower().strip())

@@ -15,6 +15,15 @@ ANILIST_SKIP_UPDATE = False
 
 
 def search_by_id(anilist_id: int, token: str):
+    """Search AniList for a single anime by its media ID.
+
+    Args:
+        anilist_id: The AniList media ID.
+        token: The AniList API bearer token.
+
+    Returns:
+        Parsed JSON response as nested namedtuples.
+    """
     query = """
         query ($id: Int) {
         media: Media (id: $id, type: ANIME) {
@@ -48,6 +57,15 @@ def search_by_id(anilist_id: int, token: str):
 
 
 def search_by_name(anilist_show_name: str, token: str):
+    """Search AniList for anime matching a title string (paginated, up to 50 results).
+
+    Args:
+        anilist_show_name: The anime title to search for.
+        token: The AniList API bearer token.
+
+    Returns:
+        Parsed JSON response as nested namedtuples containing page info and media list.
+    """
     query = """
         query ($page: Int, $perPage: Int, $search: String) {
             Page (page: $page, perPage: $perPage) {
@@ -89,6 +107,15 @@ def search_by_name(anilist_show_name: str, token: str):
 
 
 def fetch_user_list(username: str, token: str):
+    """Fetch a user's complete anime list from AniList.
+
+    Args:
+        username: The AniList username.
+        token: The AniList API bearer token.
+
+    Returns:
+        Parsed JSON response containing MediaListCollection with all lists and entries.
+    """
     query = """
         query ($username: String) {
             MediaListCollection(userName: $username, type: ANIME) {
@@ -136,8 +163,18 @@ def fetch_user_list(username: str, token: str):
 
 
 def update_series(media_id: int, progress: int, status: str, token: str):
+    """Update an anime's watch progress and status on AniList.
+
+    Skips the update if ANILIST_SKIP_UPDATE is enabled.
+
+    Args:
+        media_id: The AniList media ID to update.
+        progress: The new episode progress count.
+        status: The new list status (CURRENT, COMPLETED, etc.).
+        token: The AniList API bearer token.
+    """
     if ANILIST_SKIP_UPDATE:
-        logger.warning("[ANILIST] Skip update is enabled in settings so not updating this item")
+        logger.warning(f"[ANILIST] Skip update for {media_id} is enabled in settings so not updating this item")
         return
     query = """
         mutation ($mediaId: Int, $status: MediaListStatus, $progress: Int) {
@@ -155,6 +192,22 @@ def update_series(media_id: int, progress: int, status: str, token: str):
 
 
 def send_graphql_request(query: str, variables: Dict[str, Any], token):
+    """Send a GraphQL request to the AniList API with rate-limit handling.
+
+    Retries automatically on HTTP 429 responses, and adds a 200ms delay
+    between requests to avoid overloading the API.
+
+    Args:
+        query: The GraphQL query or mutation string.
+        variables: A dict of GraphQL variables.
+        token: The AniList API bearer token.
+
+    Returns:
+        The requests.Response object.
+
+    Raises:
+        requests.HTTPError: If the response has a non-2xx/non-429 status.
+    """
     url = "https://graphql.anilist.co"
     headers = {
         "Authorization": "Bearer " + token,
@@ -180,6 +233,14 @@ def send_graphql_request(query: str, variables: Dict[str, Any], token):
 
 
 def to_object(obj):
+    """JSON object_hook that converts dicts to namedtuples for attribute-style access.
+
+    Args:
+        obj: A dict from json.loads.
+
+    Returns:
+        A namedtuple with keys as attributes.
+    """
     keys, values = zip(*obj.items())
     # print(keys, values)
     return collections.namedtuple("X", keys)(*values)
